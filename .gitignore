@@ -1,0 +1,41 @@
+# 忽略所有文件和目录
+*
+
+# 但包含 .gitignore 文件本身
+!.gitignore
+
+# 但包含 admin 和 mobile 目录
+!admin/
+!mobile/
+
+# 忽略 admin 和 mobile 目录下的某些文件
+admin/vendor/
+admin/node_modules/
+admin/storage/logs/
+admin/storage/framework/cache/
+admin/storage/framework/sessions/
+admin/storage/framework/views/
+admin/bootstrap/cache/
+admin/.env
+admin/.env.backup
+admin/.env.production
+admin/public/uploads/
+admin/public/qrcodes/
+admin/public/inviterQrcodes/
+mobile/node_modules/
+mobile/.env
+mobile/.env.backup
+mobile/.env.production
+
+# 但保留目录结构
+!admin/vendor/.gitkeep
+!admin/storage/
+!admin/storage/.gitignore
+!admin/storage/app/
+!admin/storage/app/.gitignore
+!admin/storage/framework/
+!admin/storage/framework/.gitignore
+!admin/storage/logs/
+!admin/storage/logs/.gitignore
+!admin/bootstrap/cache/
+!admin/bootstrap/cache/.gitkeep
