@@ -1224,7 +1224,7 @@ class DbzhenrenService
      * @param callable $getBalanceCallback 获取余额的回调函数 function($loginName, $currency) { return $balance; }
      * @return string JSON 格式字符串
      */
-    public function getBatchBalance($requestData = null, $getBalanceCallback = null)
+    public function getBatchBalance()
     {
         // 从 POST 请求中获取参数
         $request = request();
@@ -1295,7 +1295,26 @@ class DbzhenrenService
         $result = [];
         foreach ($loginNames as $loginName) {
             try {
-                    $balance = $getBalanceCallback ? call_user_func($getBalanceCallback, $loginName, $currency) : 0;
+                // 从loginName中移除merchant_code前缀（只移除开头的）
+                $api_user = $loginName;
+                if (!empty($this->merchant_code)) {
+                    $merchantCodeLower = strtolower($this->merchant_code);
+                    $loginNameLower = strtolower($loginName);
+                    if (strpos($loginNameLower, $merchantCodeLower) === 0) {
+                        $api_user = substr($loginName, strlen($this->merchant_code));
+                    }
+                }
+
+                // 查找用户API记录
+                $userApi = User_Api::where('api_user', $api_user)
+                    ->where('api_code', $this->db_code)
+                    ->first();
+
+                if ($userApi) {
+                    $balance = floatval($userApi->api_money);
+                } else {
+                    $balance = 0;
+                }
                 // 余额支持4个精度，状态不正确或账号不存在时返回0
                 $balance = round($balance, 4);
             } catch (\Exception $e) {
@@ -1347,14 +1366,9 @@ class DbzhenrenService
      * 从 POST 请求中获取参数
      * 直接返回 JSON 格式响应，不依赖系统返回规则
      * 
-     * @param array $requestData 请求数据（可选，如果不传则从 request() 获取）
-     * @param callable $betConfirmCallback 下注确认回调函数
-     *   function($transferNo, $loginName, $betTotalAmount, $betInfo, $gameTypeId, $roundNo, $betTime, $currency) {
-     *     return ['success' => true, 'balance' => $balance, 'realBetAmount' => $realBetAmount, 'realBetInfo' => $realBetInfo];
-     *   }
      * @return string JSON 格式字符串
      */
-    public function betConfirm($requestData = null, $betConfirmCallback = null)
+    public function betConfirm()
     {
         // 从 POST 请求中获取参数
         $request = request();
@@ -1580,14 +1594,9 @@ class DbzhenrenService
      * 从 POST 请求中获取参数
      * 直接返回 JSON 格式响应，不依赖系统返回规则
      * 
-     * @param array $requestData 请求数据（可选，如果不传则从 request() 获取）
-     * @param callable $betCancelCallback 取消下注回调函数
-     *   function($transferNo, $loginName, $gameTypeId, $roundNo, $cancelTime, $currency, $betPayoutMap, $hasTransferOut) {
-     *     return ['success' => true, 'balance' => $balance, 'rollbackAmount' => $rollbackAmount];
-     *   }
      * @return string JSON 格式字符串
      */
-    public function betCancel($requestData = null, $betCancelCallback = null)
+    public function betCancel()
     {
         // 从 POST 请求中获取参数
         $request = request();
@@ -1642,8 +1651,21 @@ class DbzhenrenService
         $roundNo = $paramsData['roundNo'] ?? '';
         $cancelTime = $paramsData['cancelTime'] ?? 0;
         $currency = $paramsData['currency'] ?? 'CNY';
-        $betPayoutMap = $paramsData['betPayoutMap'] ?? [];
+        $betPayoutMapStr = $paramsData['betPayoutMap'] ?? '';
         $hasTransferOut = $paramsData['hasTransferOut'] ?? 0;
+        
+        // 解析 betPayoutMap（可能是JSON字符串）
+        $betPayoutMap = [];
+        if (!empty($betPayoutMapStr)) {
+            if (is_string($betPayoutMapStr)) {
+                $decodedMap = json_decode($betPayoutMapStr, true);
+                if (is_array($decodedMap)) {
+                    $betPayoutMap = $decodedMap;
+                }
+            } elseif (is_array($betPayoutMapStr)) {
+                $betPayoutMap = $betPayoutMapStr;
+            }
+        }
 
         if (empty($transferNo) || empty($loginName)) {
             return json_encode([
@@ -1653,20 +1675,70 @@ class DbzhenrenService
         }
 
         try {
-            // 调用回调函数处理取消下注
-            $result = $betCancelCallback ? call_user_func($betCancelCallback, $transferNo, $loginName, $gameTypeId, $roundNo, $cancelTime, $currency, $betPayoutMap, $hasTransferOut) : ['success' => false, 'message' => '回调函数未设置'];
+            // 从loginName中移除merchant_code前缀（只移除开头的）
+            $api_user = $loginName;
+            if (!empty($this->merchant_code)) {
+                $merchantCodeLower = strtolower($this->merchant_code);
+                $loginNameLower = strtolower($loginName);
+                if (strpos($loginNameLower, $merchantCodeLower) === 0) {
+                    $api_user = substr($loginName, strlen($this->merchant_code));
+                }
+            }
 
-            if (!isset($result['success']) || !$result['success']) {
+            // 查找用户API记录（使用锁防止并发问题）
+            $userApi = User_Api::where('api_user', $api_user)
+                ->where('api_code', $this->db_code)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$userApi) {
+                Log::warning('Dbzhenren betCancel 用户不存在', [
+                    'loginName' => $loginName,
+                    'api_user' => $api_user,
+                    'api_code' => $this->db_code
+                ]);
                 return json_encode([
                     'code' => 90000,
-                    'message' => $result['message'] ?? '处理失败'
+                    'message' => '用户不存在'
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
+            // 计算需要回滚的金额（从betPayoutMap中获取，如果没有则从game_records中查找）
+            $rollbackAmount = 0;
+            if (!empty($betPayoutMap) && is_array($betPayoutMap)) {
+                // 从betPayoutMap中计算总回滚金额
+                foreach ($betPayoutMap as $betId => $amount) {
+                    $rollbackAmount += floatval($amount);
+                }
+            } else {
+                // 如果没有betPayoutMap，从game_records中查找该transferNo对应的投注金额
+                $gameRecords = GameRecord::where('transfer_no', $transferNo)
+                    ->where('platform_type', $this->db_code)
+                    ->get();
+                foreach ($gameRecords as $record) {
+                    $rollbackAmount += floatval($record->bet_amount);
+                }
+            }
+
+            // 更新余额（加回投注金额）
+            $currentBalance = floatval($userApi->api_money);
+            $newBalance = $currentBalance + $rollbackAmount;
+            $userApi->api_money = $newBalance;
+            $userApi->save();
+
+            Log::info('Dbzhenren betCancel 更新余额', [
+                'loginName' => $loginName,
+                'api_user' => $api_user,
+                'transfer_no' => $transferNo,
+                'rollback_amount' => $rollbackAmount,
+                'before_balance' => $currentBalance,
+                'after_balance' => $newBalance
+            ]);
+
             $data = [
                 'loginName' => $loginName,
-                'balance' => round($result['balance'], 4),
-                'rollbackAmount' => round($result['rollbackAmount'], 4)
+                'balance' => round($newBalance, 4),
+                'rollbackAmount' => round($rollbackAmount, 4)
             ];
 
             // 将data转为JSON字符串
@@ -1709,14 +1781,9 @@ class DbzhenrenService
      * 从 POST 请求中获取参数
      * 直接返回 JSON 格式响应，不依赖系统返回规则
      * 
-     * @param array $requestData 请求数据（可选，如果不传则从 request() 获取）
-     * @param callable $gamePayoutCallback 派彩回调函数
-     *   function($transferNo, $loginName, $payoutAmount, $gameTypeId, $roundNo, $payoutTime, $currency, $transferType, $playerId, $betPayoutMap) {
-     *     return ['success' => true, 'balance' => $balance, 'realAmount' => $realAmount, 'badAmount' => $badAmount];
-     *   }
      * @return string JSON 格式字符串
      */
-    public function gamePayout($requestData = null, $gamePayoutCallback = null)
+    public function gamePayout()
     {
         // 从 POST 请求中获取参数
         $request = request();
@@ -1767,14 +1834,27 @@ class DbzhenrenService
 
         $transferNo = $paramsData['transferNo'] ?? '';
         $loginName = $paramsData['loginName'] ?? '';
-        $payoutAmount = $paramsData['payoutAmount'] ?? 0;
+        $payoutAmount = floatval($paramsData['payoutAmount'] ?? 0);
         $gameTypeId = $paramsData['gameTypeId'] ?? 0;
         $roundNo = $paramsData['roundNo'] ?? '';
         $payoutTime = $paramsData['payoutTime'] ?? 0;
         $currency = $paramsData['currency'] ?? 'CNY';
         $transferType = $paramsData['transferType'] ?? 'PAYOUT';
         $playerId = $paramsData['playerId'] ?? 0;
-        $betPayoutMap = $paramsData['betPayoutMap'] ?? [];
+        $betPayoutMapStr = $paramsData['betPayoutMap'] ?? '';
+        
+        // 解析 betPayoutMap（可能是JSON字符串）
+        $betPayoutMap = [];
+        if (!empty($betPayoutMapStr)) {
+            if (is_string($betPayoutMapStr)) {
+                $decodedMap = json_decode($betPayoutMapStr, true);
+                if (is_array($decodedMap)) {
+                    $betPayoutMap = $decodedMap;
+                }
+            } elseif (is_array($betPayoutMapStr)) {
+                $betPayoutMap = $betPayoutMapStr;
+            }
+        }
 
         if (empty($transferNo) || empty($loginName)) {
             return json_encode([
@@ -1784,40 +1864,94 @@ class DbzhenrenService
         }
 
         try {
-            // 调用回调函数处理派彩
-            $result = $gamePayoutCallback ? call_user_func($gamePayoutCallback, $transferNo, $loginName, $payoutAmount, $gameTypeId, $roundNo, $payoutTime, $currency, $transferType, $playerId, $betPayoutMap) : ['success' => false, 'message' => '回调函数未设置'];
+            // 从loginName中移除merchant_code前缀（只移除开头的）
+            $api_user = $loginName;
+            if (!empty($this->merchant_code)) {
+                $merchantCodeLower = strtolower($this->merchant_code);
+                $loginNameLower = strtolower($loginName);
+                if (strpos($loginNameLower, $merchantCodeLower) === 0) {
+                    $api_user = substr($loginName, strlen($this->merchant_code));
+                }
+            }
 
-            if (!$result['success']) {
+            // 查找用户API记录（使用锁防止并发问题）
+            $userApi = User_Api::where('api_user', $api_user)
+                ->where('api_code', $this->db_code)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$userApi) {
+                Log::warning('Dbzhenren gamePayout 用户不存在', [
+                    'loginName' => $loginName,
+                    'api_user' => $api_user,
+                    'api_code' => $this->db_code
+                ]);
                 return json_encode([
                     'code' => 90000,
-                    'message' => $result['message'] ?? '处理失败'
+                    'message' => '用户不存在'
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
-            $data = [
+            // 根据 payoutAmount 更新 api_money
+            $currentBalance = floatval($userApi->api_money);
+            $newBalance = $currentBalance + $payoutAmount; // payoutAmount 可能为正数（加款）或负数（扣款）
+            
+            // 检查余额是否足够（如果是扣款）
+            if ($payoutAmount < 0 && $newBalance < 0) {
+                Log::warning('Dbzhenren gamePayout 余额不足', [
+                    'loginName' => $loginName,
+                    'api_user' => $api_user,
+                    'current_balance' => $currentBalance,
+                    'payout_amount' => $payoutAmount,
+                    'new_balance' => $newBalance
+                ]);
+                // 继续处理，但记录警告
+            }
+            
+            $userApi->api_money = $newBalance;
+            $userApi->save();
+            
+            Log::info('Dbzhenren gamePayout 更新余额', [
                 'loginName' => $loginName,
-                'balance' => round($result['balance'], 4),
-                'realAmount' => round($result['realAmount'], 6),
-                'badAmount' => round($result['badAmount'], 6)
+                'api_user' => $api_user,
+                'transfer_no' => $transferNo,
+                'transfer_type' => $transferType,
+                'payout_amount' => $payoutAmount,
+                'before_balance' => $currentBalance,
+                'after_balance' => $newBalance
+            ]);
+
+            // 构建返回数据（参考 zhenren.md 格式）
+            // realAmount 等于 payoutAmount
+            $realAmount = $payoutAmount;
+            $badAmount = 0; // 坏账金额，默认为0
+
+            $data = [
+                'realAmount' => round($realAmount, 6),
+                'balance' => round($newBalance, 6),
+                'loginName' => $loginName,
+                'badAmount' => round($badAmount, 6)
             ];
 
-            // 将data转为JSON字符串
+            // 将data转为JSON字符串（注意：data字段是JSON字符串，不是对象）
             $dataJson = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             
             // 对data参数进行签名（使用md5_key）
             $responseSignature = $this->generateMd5KeySign($dataJson);
 
-            // 构建成功响应
+            // 构建成功响应（参考 zhenren.md 格式）
             $response = [
                 'code' => 200,
-                'message' => 'Success',
-                'data' => $dataJson,
+                'message' => '成功',
+                'data' => $dataJson, // data 是 JSON 字符串
                 'signature' => $responseSignature
             ];
 
             Log::info('Dbzhenren gamePayout 处理成功', [
                 'transferNo' => $transferNo,
                 'loginName' => $loginName,
+                'payout_amount' => $payoutAmount,
+                'balance' => $newBalance,
                 'response' => $response
             ]);
 
@@ -1827,7 +1961,8 @@ class DbzhenrenService
             Log::error('Dbzhenren gamePayout 处理异常', [
                 'transferNo' => $transferNo,
                 'loginName' => $loginName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return json_encode([
                 'code' => 90000,
@@ -1841,14 +1976,9 @@ class DbzhenrenService
      * 从 POST 请求中获取参数
      * 直接返回 JSON 格式响应，不依赖系统返回规则
      * 
-     * @param array $requestData 请求数据（可选，如果不传则从 request() 获取）
-     * @param callable $activityPayoutCallback 活动派彩回调函数
-     *   function($transferNo, $loginName, $payoutAmount, $payoutType, $transferType, $playerId, $payoutTime, $currency, $hasTransferOut) {
-     *     return ['success' => true, 'balance' => $balance, 'realAmount' => $realAmount, 'badAmount' => $badAmount];
-     *   }
      * @return string JSON 格式字符串
      */
-    public function activityPayout($requestData = null, $activityPayoutCallback = null)
+    public function activityPayout()
     {
         // 从 POST 请求中获取参数
         $request = request();
@@ -1899,7 +2029,7 @@ class DbzhenrenService
 
         $transferNo = $paramsData['transferNo'] ?? '';
         $loginName = $paramsData['loginName'] ?? '';
-        $payoutAmount = $paramsData['payoutAmount'] ?? 0;
+        $payoutAmount = floatval($paramsData['payoutAmount'] ?? 0);
         $payoutType = $paramsData['payoutType'] ?? '';
         $transferType = $paramsData['transferType'] ?? '';
         $playerId = $paramsData['playerId'] ?? 0;
@@ -1915,28 +2045,77 @@ class DbzhenrenService
         }
 
         try {
-            // 调用回调函数处理活动派彩
-            $result = $activityPayoutCallback ? call_user_func($activityPayoutCallback, $transferNo, $loginName, $payoutAmount, $payoutType, $transferType, $playerId, $payoutTime, $currency, $hasTransferOut) : ['success' => false, 'message' => '回调函数未设置'];
-
-            if (!$result['success']) {
-                // 活动和消费类不允许产生坏账，余额不足时返回失败
-                if ($payoutType === 'DEDUCTION' && $result['code'] == 1002) {
-                    return json_encode([
-                        'code' => 1002,
-                        'message' => '余额不足'
-                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            // 从loginName中移除merchant_code前缀（只移除开头的）
+            $api_user = $loginName;
+            if (!empty($this->merchant_code)) {
+                $merchantCodeLower = strtolower($this->merchant_code);
+                $loginNameLower = strtolower($loginName);
+                if (strpos($loginNameLower, $merchantCodeLower) === 0) {
+                    $api_user = substr($loginName, strlen($this->merchant_code));
                 }
+            }
+
+            // 查找用户API记录（使用锁防止并发问题）
+            $userApi = User_Api::where('api_user', $api_user)
+                ->where('api_code', $this->db_code)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$userApi) {
+                Log::warning('Dbzhenren activityPayout 用户不存在', [
+                    'loginName' => $loginName,
+                    'api_user' => $api_user,
+                    'api_code' => $this->db_code
+                ]);
                 return json_encode([
-                    'code' => $result['code'] ?? 90000,
-                    'message' => $result['message'] ?? '处理失败'
+                    'code' => 90000,
+                    'message' => '用户不存在'
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
+            // 根据 payoutAmount 更新 api_money
+            $currentBalance = floatval($userApi->api_money);
+            $newBalance = $currentBalance + $payoutAmount; // payoutAmount 可能为正数（加款）或负数（扣款）
+            
+            // 活动和消费类不允许产生坏账，余额不足时返回失败
+            if ($payoutType === 'DEDUCTION' && $newBalance < 0) {
+                Log::warning('Dbzhenren activityPayout 余额不足', [
+                    'loginName' => $loginName,
+                    'api_user' => $api_user,
+                    'current_balance' => $currentBalance,
+                    'payout_amount' => $payoutAmount,
+                    'new_balance' => $newBalance,
+                    'payout_type' => $payoutType
+                ]);
+                return json_encode([
+                    'code' => 1002,
+                    'message' => '余额不足'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+            
+            $userApi->api_money = $newBalance;
+            $userApi->save();
+            
+            Log::info('Dbzhenren activityPayout 更新余额', [
+                'loginName' => $loginName,
+                'api_user' => $api_user,
+                'transfer_no' => $transferNo,
+                'transfer_type' => $transferType,
+                'payout_type' => $payoutType,
+                'payout_amount' => $payoutAmount,
+                'before_balance' => $currentBalance,
+                'after_balance' => $newBalance
+            ]);
+
+            // 构建返回数据
+            $realAmount = $payoutAmount;
+            $badAmount = 0; // 坏账金额，默认为0
+
             $data = [
                 'loginName' => $loginName,
-                'balance' => round($result['balance'], 4),
-                'realAmount' => round($result['realAmount'], 4),
-                'badAmount' => round($result['badAmount'], 4)
+                'balance' => round($newBalance, 4),
+                'realAmount' => round($realAmount, 4),
+                'badAmount' => round($badAmount, 4)
             ];
 
             // 将data转为JSON字符串
@@ -2075,9 +2254,10 @@ class DbzhenrenService
                     }
                 }
 
-                // 查找用户API记录
+                // 查找用户API记录（使用锁防止并发问题）
                 $userApi = User_Api::where('api_user', $api_user)
                     ->where('api_code', $this->db_code)
+                    ->lockForUpdate()
                     ->first();
 
                 if (!$userApi) {
@@ -2100,16 +2280,6 @@ class DbzhenrenService
 
                 // 处理每个投注记录
                 foreach ($bettingRecordList as $bettingRecord) {
-                    // 根据 zhenren.md，只有 recordType 为 1（正式）的记录才会返回给商户
-                    $recordType = $bettingRecord['recordType'] ?? 0;
-                    if ($recordType != 1) {
-                        Log::info('Dbzhenren playerBetting 跳过非正式记录', [
-                            'bettingRecord' => $bettingRecord,
-                            'recordType' => $recordType
-                        ]);
-                        continue;
-                    }
-
                     $betId = (string)($bettingRecord['id'] ?? '');
                     if (empty($betId)) {
                         Log::warning('Dbzhenren playerBetting betId 为空', [
@@ -2122,7 +2292,7 @@ class DbzhenrenService
                     $gameRecord = GameRecord::where('bet_id', $betId)
                         ->where('platform_type', $this->db_code)
                         ->first();
-                        $status == 2;
+                    $status = 2;
                         if($bettingRecord['betStatus'] == 2) $status = 0;
                         if($bettingRecord['betStatus'] == 1) $status = 1;
                     // 准备数据
@@ -2238,14 +2408,9 @@ class DbzhenrenService
      * 从 POST 请求中获取参数
      * 直接返回 JSON 格式响应，不依赖系统返回规则
      * 
-     * @param array $requestData 请求数据（可选，如果不传则从 request() 获取）
-     * @param callable $activityRebateCallback 返利推送回调函数
-     *   function($detailId, $activityType, $agentId, $agentCode, $playerId, $loginName, $activityId, $activityName, $createdTime, $rewardAmount) {
-     *     return ['success' => true];
-     *   }
      * @return string JSON 格式字符串
      */
-    public function activityRebate($requestData = null, $activityRebateCallback = null)
+    public function activityRebate()
     {
         // 从 POST 请求中获取参数
         $request = request();
@@ -2313,15 +2478,22 @@ class DbzhenrenService
         }
 
         try {
-            // 调用回调函数处理返利推送
-            $result = $activityRebateCallback ? call_user_func($activityRebateCallback, $detailId, $activityType, $agentId, $agentCode, $playerId, $loginName, $activityId, $activityName, $createdTime, $rewardAmount) : ['success' => false, 'message' => '回调函数未设置'];
-
-            if (!$result['success']) {
-                return json_encode([
-                    'code' => 90000,
-                    'message' => $result['message'] ?? '处理失败'
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            }
+            // 处理返利推送数据
+            // 这里可以根据实际业务需求处理数据，比如写入数据库等
+            // 目前先简单处理，直接返回成功
+            
+            Log::info('Dbzhenren activityRebate 处理数据', [
+                'detailId' => $detailId,
+                'activityType' => $activityType,
+                'agentId' => $agentId,
+                'agentCode' => $agentCode,
+                'playerId' => $playerId,
+                'loginName' => $loginName,
+                'activityId' => $activityId,
+                'activityName' => $activityName,
+                'createdTime' => $createdTime,
+                'rewardAmount' => $rewardAmount
+            ]);
 
             $data = [
                 'merchantCode' => $this->merchant_code

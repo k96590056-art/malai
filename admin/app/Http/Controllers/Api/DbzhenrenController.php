@@ -29,11 +29,7 @@ class DbzhenrenController extends Controller
      */
     public function getBatchBalance(Request $request)
     {
-        $result = $this->service->getBatchBalance(null, function($loginName, $currency) {
-            // 这里需要实现实际的余额查询逻辑
-            // 返回余额数值
-            return 0.0000;
-        });
+        $result = $this->service->getBatchBalance();
         return response($result, 200)->header('Content-Type', 'application/json');
     }
 
@@ -42,11 +38,7 @@ class DbzhenrenController extends Controller
      */
     public function betConfirm(Request $request)
     {
-        $result = $this->service->betConfirm(null, function($transferNo, $loginName, $betTotalAmount, $betInfo, $gameTypeId, $roundNo, $betTime, $currency) {
-            // 这里需要实现实际的余额扣款逻辑
-            // 返回格式：['success' => true, 'balance' => 90.0000, 'realBetAmount' => 10.0000, 'realBetInfo' => []]
-            return ['success' => true, 'balance' => 90.0000, 'realBetAmount' => 10.0000, 'realBetInfo' => []];
-        });
+        $result = $this->service->betConfirm();
         return response($result, 200)->header('Content-Type', 'application/json');
     }
 
@@ -55,11 +47,7 @@ class DbzhenrenController extends Controller
      */
     public function betCancel(Request $request)
     {
-        $result = $this->service->betCancel(null, function($transferNo, $loginName, $gameTypeId, $roundNo, $cancelTime, $currency, $betPayoutMap, $hasTransferOut) {
-            // 这里需要实现实际的余额加款逻辑
-            // 返回格式：['success' => true, 'balance' => 100.0000, 'rollbackAmount' => 10.0000]
-            return ['success' => true, 'balance' => 100.0000, 'rollbackAmount' => 10.0000];
-        });
+        $result = $this->service->betCancel();
         return response($result, 200)->header('Content-Type', 'application/json');
     }
 
@@ -68,11 +56,7 @@ class DbzhenrenController extends Controller
      */
     public function gamePayout(Request $request)
     {
-        $result = $this->service->gamePayout(null, function($transferNo, $loginName, $payoutAmount, $gameTypeId, $roundNo, $payoutTime, $currency, $transferType, $playerId, $betPayoutMap) {
-            // 这里需要实现实际的余额加款逻辑
-            // 返回格式：['success' => true, 'balance' => 110.0000, 'realAmount' => 10.0000, 'badAmount' => 0.0000]
-            return ['success' => true, 'balance' => 110.0000, 'realAmount' => 10.0000, 'badAmount' => 0.0000];
-        });
+        $result = $this->service->gamePayout();
         return response($result, 200)->header('Content-Type', 'application/json');
     }
 
@@ -81,11 +65,7 @@ class DbzhenrenController extends Controller
      */
     public function activityPayout(Request $request)
     {
-        $result = $this->service->activityPayout(null, function($transferNo, $loginName, $payoutAmount, $payoutType, $transferType, $playerId, $payoutTime, $currency, $hasTransferOut) {
-            // 这里需要实现实际的余额加款逻辑
-            // 返回格式：['success' => true, 'balance' => 110.0000, 'realAmount' => 10.0000, 'badAmount' => 0.0000]
-            return ['success' => true, 'balance' => 110.0000, 'realAmount' => 10.0000, 'badAmount' => 0.0000];
-        });
+        $result = $this->service->activityPayout();
         return response($result, 200)->header('Content-Type', 'application/json');
     }
 
@@ -103,11 +83,7 @@ class DbzhenrenController extends Controller
      */
     public function activityRebate(Request $request)
     {
-        $result = $this->service->activityRebate(null, function($detailId, $activityType, $agentId, $agentCode, $playerId, $loginName, $activityId, $activityName, $createdTime, $rewardAmount) {
-            // 这里需要实现实际的返利推送处理逻辑
-            // 返回格式：['success' => true]
-            return ['success' => true];
-        });
+        $result = $this->service->activityRebate();
         return response($result, 200)->header('Content-Type', 'application/json');
     }
 }
