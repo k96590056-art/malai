@@ -547,7 +547,7 @@ html, body {
 }
 
 .step .van-tab--active {
-  color: #fff;
+  color: #9d4edd;
   background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjM2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0wIDB2MzZoMjQwLjgzN0wyNTAgMThsLTkuMTYzLTE4eiIgZmlsbD0iIzA2OUI3MSIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+) no-repeat 100% / cover;
 }
 
@@ -555,7 +555,7 @@ html, body {
   height: 27px;
 }
 .metransRecord .van-tabs__nav--card .van-tab.van-tab--active {
-  color: #fff;
+  color: #9d4edd;
   background-color: #069b71;
   border-radius: 22px;
 }
@@ -588,14 +588,14 @@ html, body {
 }
 
 .acts .van-tabs__line {
-  background-color: #1890ff !important;
+  background-color: #9d4edd !important;
 }
 .acts .van-tab--active {
-  color: #1890ff !important;
+  color: #ffffff !important;
 }
 
 .van-nav-bar .van-icon {
-  color: #000;
+  color: #ffffff;
 }
 .van-nav-bar {
   background-color: #ede9e7;
@@ -646,10 +646,11 @@ p {
   cursor: pointer;
 }
 .van-tab--active {
-  color: #108ee9;
+  background-color: #9d4edd;
+  color: #ffffff;
 }
 .van-tabs__line {
-  background-color: #108ee9;
+  background-color: transparent;
 }
 .van-cell {
   padding: 5px 8px;
@@ -670,7 +671,7 @@ p {
 
 .van-button--info {
   color: #fff;
-  background-color: #1890ff;
+  background-color: #9d4edd;
   border: 1px solid #cf866b;
 }
 

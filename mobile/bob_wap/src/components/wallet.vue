@@ -158,17 +158,14 @@ export default {
   
   :deep(.van-nav-bar__left) {
     color: #ffffff !important;
-    
-    .van-icon {
-      color: #ffffff !important;
-    }
   }
   
   :deep(.van-nav-bar__content) {
     color: #ffffff !important;
   }
   
-  :deep(.van-icon) {
+  // 确保返回按钮图标为白色
+  :deep(.van-nav-bar__left .van-nav-bar .van-icon) {
     color: #ffffff !important;
   }
 }
@@ -210,19 +207,6 @@ export default {
     margin-top: 20px;
     font-size: 0.28rem;
     color: rgba(255, 255, 255, 0.6);
-  }
-  
-  :deep(.van-button) {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: #ffffff;
-    font-weight: 600;
-    
-    &.van-button--plain {
-      background: rgba(157, 78, 221, 0.2);
-      border: 1px solid #9d4edd;
-      color: #9d4edd;
-    }
   }
 }
 

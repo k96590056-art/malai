@@ -125,6 +125,11 @@ export default {
   :deep(.van-tabs__line) {
     background-color: #9d4edd;
   }
+  
+  :deep(.van-tabs__nav--line.van-tabs__nav--complete) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
 }
 .consg {
   padding: 90px 15px 120px 15px;
