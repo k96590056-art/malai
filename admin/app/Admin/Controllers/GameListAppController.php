@@ -97,6 +97,7 @@ class GameListAppController extends AdminController
             $form->select('platform_name', '游戏接口')->options($platformOptions)->required()->help('选择游戏接口（仅显示启用的接口）');
             
             $form->text('name')->required();
+            $form->url('game_url', '游戏外链')->help('选填，如果填写了游戏外链，将直接使用此外链作为游戏链接，不会调用游戏接口');
             $form->text('game_code', '游戏代码')->default('0')->required();
             $form->text('venue_code', '场馆编码')->help('主要用于dp接口类');
             // 获取所有开启的游戏分类

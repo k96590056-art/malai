@@ -105,6 +105,7 @@ class GameListController extends AdminController
             $form->display('id');
             $form->text('platform_name')->required();
             $form->text('name')->required();
+            $form->url('game_url', '游戏外链')->help('选填，如果填写了游戏外链，将直接使用此外链作为游戏链接，不会调用游戏接口');
             $form->text('game_code', '游戏代码')->default('0')->required();
             // $form->text('name_en')->required();
             // $form->text('keywords');

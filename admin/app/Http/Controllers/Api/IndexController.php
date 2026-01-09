@@ -364,7 +364,26 @@ class IndexController extends Controller
         $apiService = null;
         $venueCode = '';
         
-        // 先通过plat_name获取游戏信息
+        // 先检查热门游戏表（GameListApp）中是否有匹配的游戏
+        $gameItemApp = null;
+        if (!empty($gameCode)) {
+            $gameItemApp = GameListApp::where('platform_name', $api_code)
+                ->where('game_code', $gameCode)
+                ->where('app_state', 1)
+                ->first();
+        } else {
+            // 如果没有gameCode，尝试通过platform_name获取第一个热门游戏
+            $gameItemApp = GameListApp::where('platform_name', $api_code)
+                ->where('app_state', 1)
+                ->first();
+        }
+        
+        // 如果热门游戏存在且有外链（game_url），直接返回外链，跳过接口调用
+        if ($gameItemApp && !empty($gameItemApp->game_url)) {
+            return $this->returnMsg(200, ['url' => $gameItemApp->game_url]);
+        }
+        
+        // 先通过plat_name获取游戏信息（GameList表）
         if (!empty($gameCode)) {
             $gameItem = GameList::where('platform_name', $api_code)
                 ->where('game_code', $gameCode)
@@ -378,6 +397,11 @@ class IndexController extends Controller
                 ->where('site_state', 1)
                 ->where('app_state', 1)
                 ->first();
+        }
+        
+        // 如果游戏存在且有外链（game_url），直接返回外链，跳过接口调用
+        if ($gameItem && !empty($gameItem->game_url)) {
+            return $this->returnMsg(200, ['url' => $gameItem->game_url]);
         }
         
         // 通过游戏的api_id在apis表中获取api_service
