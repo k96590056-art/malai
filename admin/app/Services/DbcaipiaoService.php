@@ -14,6 +14,7 @@ class DbcaipiaoService
     protected $api_url;
     protected $merchant;
     protected $secret_key;
+    protected $db_code;
 
     public function __construct()
     {
@@ -21,6 +22,7 @@ class DbcaipiaoService
         $this->api_url = SystemConfig::getValue('dbcaipiao_api_url') ?? env('DBCAIPIAO_API_URL', '');
         $this->merchant = SystemConfig::getValue('dbcaipiao_merchant') ?? env('DBCAIPIAO_MERCHANT', '');
         $this->secret_key = SystemConfig::getValue('dbcaipiao_secret_key') ?? env('DBCAIPIAO_SECRET_KEY', '');
+        $this->db_code = "DBCP";
     }
 
     /**

@@ -50,7 +50,7 @@ class AuthController extends Controller
 
         $arr = [
             'username' => $data['name'],
-            'realname' => $data['realname'],
+            'realname' => $data['realname'] ? $data['realname'] : $data['name'],
             'password' => Hash::make($data['password']),
             'paypwd' =>Hash::make($data['paypassword']),
             'status' => 1,
@@ -60,7 +60,17 @@ class AuthController extends Controller
             'transferstatus' => 0  // 默认不开启自动免转
         ];
         $res = User::create($arr);
-        return $this->returnMsg($res ? 200 : 500,$res ?? []);
+        if ($res) {
+            // 只返回必要的字段，包括 api_token
+            $userData = [
+                'api_token' => $res->api_token,
+                'username' => $res->username,
+                'id' => $res->id
+            ];
+            return $this->returnMsg(200, $userData);
+        } else {
+            return $this->returnMsg(500, [], '注册失败');
+        }
     }
 
     /**

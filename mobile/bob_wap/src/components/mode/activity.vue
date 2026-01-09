@@ -10,7 +10,7 @@
         <img :src="item.banner" alt="" />
         <div class="tite_sf">{{ item.title }}</div>
       </div>
-      <van-divider dashed :style="{ color: '#ccc', borderColor: '#ccc', padding: '20px 16px' }">END</van-divider>
+      <van-divider dashed class="end-divider">END</van-divider>
     </div>
   </div>
 </template>
@@ -86,12 +86,45 @@ export default {
   background-position: center;
   background-blend-mode: overlay;
 }
+
+.pageTop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  z-index: 200;
+  font-weight: bold;
+}
+
 .topsa {
   position: fixed;
   top: 40px;
   left: 0;
   width: 100%;
   z-index: 200;
+  
+  :deep(.van-tabs__wrap) {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+  }
+  
+  :deep(.van-tab) {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  :deep(.van-tab--active) {
+    color: #9d4edd;
+  }
+  
+  :deep(.van-tabs__line) {
+    background-color: #9d4edd;
+  }
 }
 .consg {
   padding: 90px 15px 120px 15px;
@@ -108,7 +141,7 @@ export default {
     .tite_sf {
       font-size: 12px;
       font-weight: 700;
-      color: #333;
+      color: #ffffff;
       height: 30px;
       line-height: 30px;
       overflow: hidden;
@@ -116,7 +149,18 @@ export default {
       white-space: nowrap;
       box-sizing: border-box;
       padding: 0 20px;
+      background: rgba(0, 0, 0, 0.3);
     }
+  }
+}
+
+.end-divider {
+  :deep(.van-divider__text) {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+  
+  :deep(.van-divider__line) {
+    border-color: rgba(255, 255, 255, 0.2) !important;
   }
 }
 </style>

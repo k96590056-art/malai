@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 
 
+Route::post('/db/tiyu/balance',                 'Service\DbcaipiaoService@upateBalance');
+Route::post('/db/tiyu/transfer',                   'Service\DbcaipiaoService@getBalance');
+Route::post('/db/tiyu/status',               'Service\DbcaipiaoService@safetyTransfer');
 
 Route::post('/db/caipiao/getBalance',                   'Service\DbcaipiaoService@getBalance');
 Route::post('/db/caipiao/safetyTransfer',               'Service\DbcaipiaoService@safetyTransfer');

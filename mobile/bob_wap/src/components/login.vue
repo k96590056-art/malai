@@ -591,4 +591,53 @@ export default {
     border-bottom: 1px solid #74249b !important;
     
     .van-dialog__title {
-      color: #ffffff
+      color: #ffffff !important;
+      font-weight: bold !important;
+      font-size: 18px;
+    }
+  }
+  
+  .van-dialog__content {
+    padding: 10px 20px 20px;
+    background: transparent !important;
+  }
+  
+  .van-dialog__footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    background: #7534a9 !important;
+    display: flex;
+  }
+  
+  .van-dialog__confirm,
+  .van-dialog__cancel {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    flex: 1;
+  }
+  
+  .van-dialog__confirm {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-left: 1px solid #660a93 !important;
+  }
+  
+  .van-dialog__cancel {
+    background-color: transparent !important;
+  }
+  
+  .van-button {
+    background-color: transparent !important;
+  }
+  
+  .van-button--default {
+    background-color: transparent !important;
+  }
+}
+
+.forgot-password-content {
+  padding: 20px 0;
+  text-align: center;
+  font-size: 14px;
+  color: #ffffff;
+  line-height: 1.5;
+}
+</style>
