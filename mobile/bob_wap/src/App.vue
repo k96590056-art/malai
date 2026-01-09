@@ -338,7 +338,19 @@ export default {
       let that = this;
       let token = sessionStorage.getItem('token') ? sessionStorage.getItem('token') : '';
       if (!token) {
-        that.showTost(0, '请登录！');
+        that.$dialog
+          .confirm({
+            message: '请先登录后再进入游戏！',
+            confirmButtonText: '去登录',
+            cancelButtonText: '再逛逛',
+          })
+          .then(() => {
+            // 点击"去登录"按钮，跳转到登录页面
+            that.$router.push({ path: '/login' });
+          })
+          .catch(() => {
+            // 点击"再逛逛"按钮，取消操作，不做任何处理
+          });
 
         return;
       }
@@ -686,6 +698,10 @@ p {
 
 .van-dialog__content {
   background: transparent !important;
+}
+
+.van-dialog__message {
+  color: #ffffff !important;
 }
 
 .van-dialog__footer {
