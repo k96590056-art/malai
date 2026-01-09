@@ -2122,7 +2122,9 @@ class DbzhenrenService
                     $gameRecord = GameRecord::where('bet_id', $betId)
                         ->where('platform_type', $this->db_code)
                         ->first();
-
+                        $status == 2;
+                        if($bettingRecord['betStatus'] == 2) $status = 0;
+                        if($bettingRecord['betStatus'] == 1) $status = 1;
                     // 准备数据
                     $recordData = [
                         'user_id' => $user->id,
@@ -2138,7 +2140,6 @@ class DbzhenrenService
                         'game_type_name' => isset($bettingRecord['gameTypeId']) && isset($this->gameTypes[$bettingRecord['gameTypeId']]) 
                             ? $this->gameTypes[$bettingRecord['gameTypeId']] 
                             : ($bettingRecord['gameTypeName'] ?? ''),
-                        'game_code' => isset($bettingRecord['gameTypeId']) ? (string)$bettingRecord['gameTypeId'] : '',
                         'platform_id' => $bettingRecord['platformId'] ?? null,
                         'platform_name' => isset($bettingRecord['platformId']) && isset($this->Halls[$bettingRecord['platformId']]) 
                             ? $this->Halls[$bettingRecord['platformId']] 
@@ -2156,7 +2157,7 @@ class DbzhenrenService
                         'pay_amount' => floatval($bettingRecord['payAmount'] ?? 0),
                         'platform_type' => $this->db_code,
                         'game_type' => 'realbet',
-                        'status' => $bettingRecord['betStatus'] ?? 0, // 0=未结算 1=已结算 2=取消注单
+                        'status' => $status, // 0=未结算 1=已结算 2=取消注单
                         'is_back' => 0,
                     ];
 
