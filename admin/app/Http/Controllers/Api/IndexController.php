@@ -451,6 +451,49 @@ class IndexController extends Controller
         
         $user = User::where('api_token',$token)->lockForUpdate()->first();
 
+        // 判断游戏项的transferstatus是否为0，如果是则进行余额转移
+        if ($gameItem && isset($gameItem->transferstatus) && $gameItem->transferstatus == 0) {
+            // 获取当前用户的所有user_api记录的api_money总和
+            $allApiMoney = User_Api::where('user_id', $user->id)->sum('api_money');
+            
+            // 获取当前用户的users表的balance
+            $userBalance = Users::where('id', $user->id)->value('balance') ?? 0;
+            
+            // 计算总金额
+            $totalAmount = $allApiMoney + $userBalance;
+            
+            if ($totalAmount > 0) {
+                // 找到或创建当前api_code对应的user_api记录
+                $targetUserApi = User_Api::where('api_code', $api_code)
+                    ->where('user_id', $user->id)
+                    ->lockForUpdate()
+                    ->first();
+                
+                if (!$targetUserApi) {
+                    // 如果不存在，创建新记录
+                    $targetUserApi = User_Api::create([
+                        'user_id' => $user->id,
+                        'api_user' => $user->username,
+                        'api_pass' => '123456',
+                        'api_code' => $api_code,
+                        'api_money' => 0,
+                    ]);
+                }
+                
+                // 将总金额加到目标记录的api_money中
+                $targetUserApi->api_money += $totalAmount;
+                $targetUserApi->save();
+                
+                // 将其他user_api记录的api_money设为0
+                User_Api::where('user_id', $user->id)
+                    ->where('id', '!=', $targetUserApi->id)
+                    ->update(['api_money' => 0]);
+                
+                // 将users表的balance设为0
+                Users::where('id', $user->id)->update(['balance' => 0]);
+            }
+        }
+
         // 定义游戏账号密码，默认值为123456
         $gamePassword = '123456';
         // 判断是否为DbService，如果是则跳过注册
