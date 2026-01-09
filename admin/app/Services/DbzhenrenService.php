@@ -5,6 +5,8 @@ namespace App\Services;
 use Illuminate\Support\Facades\Log;
 use App\Models\SystemConfig;
 use App\Models\User_Api;
+use App\Models\User;
+use App\Models\GameRecord;
 use Illuminate\Http\Request;
 
 /**
@@ -17,6 +19,870 @@ use Illuminate\Http\Request;
  */
 class DbzhenrenService
 {
+    // 厅ID和厅名称映射关系
+    protected $Halls = [
+        1 => '旗舰厅',
+        2 => '区块链厅',
+        3 => '亚太厅',
+        4 => '欧洲厅',
+        5 => '国际厅',
+        6 => '透亮厅',
+        7 => '美洲厅',
+    ];
+
+    // 游戏类型ID和游戏类型名称映射关系
+    protected $gameTypes = [
+        2001 => '经典百家乐',
+        2002 => '极速百家乐',
+        2003 => '竞咪百家乐',
+        2004 => '包桌百家乐',
+        2005 => '共咪百家乐',
+        2006 => '龙虎',
+        2007 => '轮盘',
+        2008 => '骰宝',
+        2009 => '牛牛',
+        2010 => '炸金花',
+        2011 => '三公',
+        2012 => '(旧)21点',
+        2013 => '多台（不支持gameTypeId 直接进入）',
+        2014 => '高额贵宾百家乐',
+        2015 => '斗牛',
+        2016 => '保险百家乐',
+        2017 => '区块链百家乐（已下架）',
+        2019 => '德州扑克',
+        2020 => '番摊',
+        2021 => '21点',
+        2022 => '色碟',
+        2023 => '温州牌九',
+        2025 => '安达巴哈',
+        2026 => '印度炸金花',
+        2027 => '劲舞百家乐（游戏玩法同百家乐）',
+        2030 => '主播百家乐（游戏玩法同百家乐）',
+        2028 => '滚球',
+        2029 => '六合彩',
+        2031 => '3D',
+        2032 => '5D',
+        2036 => '多利',
+        2034 => '闪电百家乐',
+        2038 => '电投百家乐',
+    ];
+
+    // 玩法编号和玩法名称映射关系
+    protected $betPoints = [
+        // 经典百家乐 / 极速百家乐 / 竞咪百家乐 / 包桌百家乐 / 共咪百家乐 / 高额贵宾百家乐 / 保险百家乐 / 现场VIP百家乐 / 主播百家乐 / 劲舞百家乐 / 电投百家乐
+        3001 => '庄',
+        3002 => '闲',
+        3003 => '和',
+        3004 => '庄对',
+        3005 => '闲对',
+        3006 => '大',
+        3007 => '小',
+        3009 => '完美对子',
+        3010 => '庄龙宝',
+        3011 => '闲龙宝',
+        3012 => '幸运六', // 经典百家乐/包桌百家乐/共咪百家乐为"幸运六"，极速百家乐/竞咪百家乐/高额贵宾百家乐/保险百家乐/主播百家乐/劲舞百家乐/电投百家乐为"超级六"
+        3013 => '庄免佣',
+        3014 => '任意对子',
+        // 骰宝
+        3017 => '单',
+        3018 => '双',
+        3019 => '小',
+        3020 => '大',
+        3021 => '全围',
+        3022 => '围骰1',
+        3023 => '围骰2',
+        3024 => '围骰3',
+        3025 => '围骰4',
+        3026 => '围骰5',
+        3027 => '围骰6',
+        3028 => '单点1',
+        3029 => '单点2',
+        3030 => '单点3',
+        3031 => '单点4',
+        3032 => '单点5',
+        3033 => '单点6',
+        3046 => '对子1',
+        3047 => '对子2',
+        3048 => '对子3',
+        3049 => '对子4',
+        3050 => '对子5',
+        3051 => '对子6',
+        3052 => '牌九式12',
+        3053 => '牌九式13',
+        3054 => '牌九式14',
+        3055 => '牌九式15',
+        3056 => '牌九式16',
+        3057 => '牌九式23',
+        3058 => '牌九式24',
+        3059 => '牌九式25',
+        3060 => '牌九式26',
+        3061 => '牌九式34',
+        3062 => '牌九式35',
+        3063 => '牌九式36',
+        3064 => '牌九式45',
+        3065 => '牌九式46',
+        3066 => '牌九式56',
+        3067 => '和值4',
+        3068 => '和值5',
+        3069 => '和值6',
+        3070 => '和值7',
+        3071 => '和值8',
+        3072 => '和值9',
+        3073 => '和值10',
+        3074 => '和值11',
+        3075 => '和值12',
+        3076 => '和值13',
+        3077 => '和值14',
+        3078 => '和值15',
+        3079 => '和值16',
+        3080 => '和值17',
+        // 轮盘 - 直注
+        3100 => '直注0',
+        3101 => '直注1',
+        3102 => '直注2',
+        3103 => '直注3',
+        3104 => '直注4',
+        3105 => '直注5',
+        3106 => '直注6',
+        3107 => '直注7',
+        3108 => '直注8',
+        3109 => '直注9',
+        3110 => '直注10',
+        3111 => '直注11',
+        3112 => '直注12',
+        3113 => '直注13',
+        3114 => '直注14',
+        3115 => '直注15',
+        3116 => '直注16',
+        3117 => '直注17',
+        3118 => '直注18',
+        3119 => '直注19',
+        3120 => '直注20',
+        3121 => '直注21',
+        3122 => '直注22',
+        3123 => '直注23',
+        3124 => '直注24',
+        3125 => '直注25',
+        3126 => '直注26',
+        3127 => '直注27',
+        3128 => '直注28',
+        3129 => '直注29',
+        3130 => '直注30',
+        3131 => '直注31',
+        3132 => '直注32',
+        3133 => '直注33',
+        3134 => '直注34',
+        3135 => '直注35',
+        3136 => '直注36',
+        // 轮盘 - 分注
+        3200 => '分注0,1',
+        3201 => '分注0,2',
+        3202 => '分注0,3',
+        3203 => '分注1,2',
+        3204 => '分注1,4',
+        3205 => '分注2,3',
+        3206 => '分注2,5',
+        3207 => '分注3,6',
+        3208 => '分注4,5',
+        3209 => '分注4,7',
+        3210 => '分注5,6',
+        3211 => '分注5,8',
+        3212 => '分注6,9',
+        3213 => '分注7,8',
+        3214 => '分注7,10',
+        3215 => '分注8,9',
+        3216 => '分注8,11',
+        3217 => '分注9,12',
+        3218 => '分注10,11',
+        3219 => '分注10,13',
+        3220 => '分注11,12',
+        3221 => '分注11,14',
+        3222 => '分注12,15',
+        3223 => '分注13,14',
+        3224 => '分注13,16',
+        3225 => '分注14,15',
+        3226 => '分注14,17',
+        3227 => '分注15,18',
+        3228 => '分注16,17',
+        3229 => '分注16,19',
+        3230 => '分注17,18',
+        3231 => '分注17,20',
+        3232 => '分注18,21',
+        3233 => '分注19,20',
+        3234 => '分注19,22',
+        3235 => '分注20,21',
+        3236 => '分注20,23',
+        3237 => '分注21,24',
+        3238 => '分注22,23',
+        3239 => '分注22,25',
+        3240 => '分注23,24',
+        3241 => '分注23,26',
+        3242 => '分注24,27',
+        3243 => '分注25,26',
+        3244 => '分注25,28',
+        3245 => '分注26,27',
+        3246 => '分注26,29',
+        3247 => '分注27,30',
+        3248 => '分注28,29',
+        3249 => '分注28,31',
+        3250 => '分注29,30',
+        3251 => '分注29,32',
+        3252 => '分注30,33',
+        3253 => '分注31,32',
+        3254 => '分注31,34',
+        3255 => '分注32,33',
+        3256 => '分注32,35',
+        3257 => '分注33,36',
+        3258 => '分注34,35',
+        3259 => '分注35,36',
+        // 轮盘 - 街注
+        3301 => '街注1,2,3',
+        3302 => '街注4,5,6',
+        3303 => '街注7,8,9',
+        3304 => '街注10,11,12',
+        3305 => '街注13,14,15',
+        3306 => '街注16,17,18',
+        3307 => '街注19,20,21',
+        3308 => '街注22,23,24',
+        3309 => '街注25,26,27',
+        3310 => '街注28,29,30',
+        3311 => '街注31,32,33',
+        3312 => '街注34,35,36',
+        // 轮盘 - 三数
+        3400 => '三数0,1,2',
+        3401 => '三数0,2,3',
+        3402 => '四个号码0,1,2,3',
+        // 轮盘 - 角注
+        3500 => '角注1,2,4,5',
+        3501 => '角注2,3,5,6',
+        3502 => '角注4,5,7,8',
+        3503 => '角注5,6,8,9',
+        3504 => '角注7,8,10,11',
+        3505 => '角注8,9,11,12',
+        3506 => '角注10,11,13,14',
+        3507 => '角注11,12,14,15',
+        3508 => '角注13,14,16,17',
+        3509 => '角注14,15,17,18',
+        3510 => '角注16,17,19,20',
+        3511 => '角注17,18,20,21',
+        3512 => '角注19,20,22,23',
+        3513 => '角注20,21,23,24',
+        3514 => '角注22,23,25,26',
+        3515 => '角注23,24,26,27',
+        3516 => '角注25,26,28,29',
+        3517 => '角注26,27,29,30',
+        3518 => '角注28,29,31,32',
+        3519 => '角注29,30,32,33',
+        3520 => '角注31,32,34,35',
+        3521 => '角注32,33,35,36',
+        // 轮盘 - 线注
+        3600 => '线注1,2,3,4,5,6',
+        3601 => '线注4,5,6,7,8,9',
+        3602 => '线注7,8,9,10,11,12',
+        3603 => '线注10,11,12,13,14,15',
+        3604 => '线注13,14,15,16,17,18',
+        3605 => '线注16,17,18,19,20,21',
+        3606 => '线注19,20,21,22,23,24',
+        3607 => '线注22,23,24,25,26,27',
+        3609 => '线注25,26,27,28,29,30',
+        3610 => '线注28,29,30,31,32,33',
+        3611 => '线注31,32,33,34,35,36',
+        // 轮盘 - 列/打/颜色
+        3700 => '列一',
+        3701 => '列二',
+        3702 => '列三',
+        3703 => '打一',
+        3704 => '打二',
+        3705 => '打三',
+        3706 => '红',
+        3707 => '黑',
+        3708 => '单',
+        3709 => '双',
+        3710 => '小',
+        3711 => '大',
+        // 牛牛
+        3800 => '闲1平倍',
+        3801 => '闲1翻倍',
+        3802 => '闲2平倍',
+        3803 => '闲2翻倍',
+        3804 => '闲3平倍',
+        3805 => '闲3翻倍',
+        3806 => '庄1平倍',
+        3807 => '庄1翻倍',
+        3808 => '庄2平倍',
+        3809 => '庄2翻倍',
+        3810 => '庄3平倍',
+        3811 => '庄3翻倍',
+        // 炸金花
+        3901 => '龙',
+        3902 => '凤',
+        3903 => '豹子',
+        3904 => '同花顺',
+        3905 => '同花',
+        3906 => '顺子',
+        3907 => '对8以上',
+        // 旧21点
+        4001 => '押注',
+        4002 => '21+3',
+        4003 => '对子',
+        4004 => '保险',
+        4005 => '加倍',
+        4006 => '分牌',
+        // 三公
+        4007 => '闲1赢',
+        4008 => '闲2赢',
+        4009 => '闲3赢',
+        4010 => '闲1输',
+        4011 => '闲2输',
+        4012 => '闲3输',
+        4013 => '闲1和',
+        4014 => '闲2和',
+        4015 => '闲3和',
+        4016 => '闲1三公',
+        4017 => '闲2三公',
+        4018 => '闲3三公',
+        4019 => '闲1对牌以上',
+        4020 => '闲2对牌以上',
+        4021 => '闲3对牌以上',
+        4022 => '庄对牌以上',
+        // 超和/超级玩法
+        4100 => '超和(0)',
+        4101 => '超和(1)',
+        4102 => '超和(2)',
+        4103 => '超和(3)',
+        4104 => '超和(4)',
+        4105 => '超和(5)',
+        4106 => '超和(6)',
+        4107 => '超和(7)',
+        4108 => '超和(8)',
+        4109 => '超和(9)',
+        4110 => '超级对',
+        4111 => '龙7',
+        4112 => '熊猫8',
+        4113 => '大老虎',
+        4114 => '小老虎',
+        4115 => '庄天牌',
+        4116 => '闲天牌',
+        4117 => '天牌',
+        4118 => '龙',
+        4119 => '虎',
+        4120 => '龙虎和',
+        4121 => '庄保险',
+        4122 => '庄保险',
+        4123 => '闲保险',
+        4124 => '闲保险',
+        // 龙虎
+        4201 => '龙',
+        4202 => '虎',
+        4203 => '和',
+        4204 => '老虎和',
+        4205 => '老虎对',
+        // 德州扑克
+        4206 => '底注',
+        4207 => '跟注',
+        4208 => 'AA边注',
+        // 番摊
+        4209 => '单',
+        4210 => '双',
+        4211 => '1番',
+        4212 => '2番',
+        4213 => '3番',
+        4214 => '4番',
+        4215 => '1念2',
+        4216 => '1念3',
+        4217 => '1念4',
+        4218 => '2念1',
+        4219 => '2念3',
+        4220 => '2念4',
+        4221 => '3念1',
+        4222 => '3念2',
+        4223 => '3念4',
+        4224 => '4念1',
+        4225 => '4念2',
+        4226 => '4念3',
+        4227 => '12角',
+        4228 => '23角',
+        4229 => '34角',
+        4230 => '41角',
+        4231 => '23四通',
+        4232 => '13四通',
+        4233 => '12四通',
+        4234 => '24三通',
+        4235 => '14三通',
+        4236 => '12三通',
+        4237 => '34二通',
+        4238 => '14二通',
+        4239 => '13二通',
+        4240 => '23一通',
+        4241 => '24一通',
+        4242 => '34一通',
+        4243 => '三门432',
+        4244 => '三门143',
+        4245 => '三门214',
+        4246 => '三门321',
+        // 21点
+        4247 => '闲1_右_底注',
+        4248 => '闲2_右_底注',
+        4249 => '闲3_右_底注',
+        4250 => '闲5_右_底注',
+        4251 => '闲6_右_底注',
+        4252 => '闲7_右_底注',
+        4253 => '闲8_右_底注',
+        4254 => '闲1_左_底注',
+        4255 => '闲2_左_底注',
+        4256 => '闲3_左_底注',
+        4257 => '闲5_左_底注',
+        4258 => '闲6_左_底注',
+        4259 => '闲7_左_底注',
+        4260 => '闲8_左_底注',
+        4301 => '闲1_右_加倍',
+        4302 => '闲2_右_加倍',
+        4303 => '闲3_右_加倍',
+        4304 => '闲5_右_加倍',
+        4305 => '闲6_右_加倍',
+        4306 => '闲7_右_加倍',
+        4307 => '闲8_右_加倍',
+        4308 => '闲1_左_加倍',
+        4309 => '闲2_左_加倍',
+        4310 => '闲3_左_加倍',
+        4311 => '闲5_左_加倍',
+        4312 => '闲6_左_加倍',
+        4313 => '闲7_左_加倍',
+        4314 => '闲8_左_加倍',
+        4401 => '闲1_21+3',
+        4402 => '闲2_21+3',
+        4403 => '闲3_21+3',
+        4404 => '闲5_21+3',
+        4405 => '闲6_21+3',
+        4406 => '闲7_21+3',
+        4407 => '闲8_21+3',
+        4501 => '闲1_完美对子',
+        4502 => '闲2_完美对子',
+        4503 => '闲3_完美对子',
+        4504 => '闲5_完美对子',
+        4505 => '闲6_完美对子',
+        4506 => '闲7_完美对子',
+        4507 => '闲8_完美对子',
+        4601 => '闲1_保险',
+        4602 => '闲2_保险',
+        4603 => '闲3_保险',
+        4604 => '闲5_保险',
+        4605 => '闲6_保险',
+        4606 => '闲7_保险',
+        4607 => '闲8_保险',
+        4701 => '闲1_旁注',
+        4702 => '闲2_旁注',
+        4703 => '闲3_旁注',
+        4704 => '闲5_旁注',
+        4705 => '闲6_旁注',
+        4706 => '闲7_旁注',
+        4707 => '闲8_旁注',
+        // 温州牌九
+        4708 => '顺门赢',
+        4709 => '顺门输',
+        4710 => '出门赢',
+        4711 => '出门输',
+        4712 => '到门赢',
+        4713 => '到门输',
+        // 色碟
+        4714 => '0',
+        4715 => '1',
+        4716 => '3',
+        4717 => '4',
+        4718 => '单',
+        4719 => '双',
+        4720 => '大',
+        4721 => '小',
+        4722 => '和',
+        4723 => '庄对',
+        4724 => '闲对',
+        // 安达巴哈
+        4725 => '安达',
+        4726 => '巴哈',
+        // 印度炸金花
+        4727 => 'A',
+        4728 => 'B',
+        4729 => '和',
+        4730 => 'A对+',
+        4731 => 'B对+',
+        4732 => '红利六',
+        // 龙虎扩展
+        5501 => '龙单',
+        5502 => '龙双',
+        5503 => '龙红',
+        5504 => '龙黑',
+        5505 => '虎单',
+        5506 => '虎双',
+        5507 => '虎红',
+        5508 => '虎黑',
+        // 赛车
+        5601 => '冠军大',
+        5602 => '冠军小',
+        5603 => '冠军单',
+        5604 => '冠军双',
+        5605 => '亚军大',
+        5606 => '亚军小',
+        5607 => '亚军单',
+        5608 => '亚军双',
+        5609 => '季军大',
+        5610 => '季军小',
+        5611 => '季军单',
+        5612 => '季军双',
+        5613 => '冠军号码1',
+        5614 => '冠军号码2',
+        5615 => '冠军号码3',
+        5616 => '冠军号码4',
+        5617 => '冠军号码5',
+        5618 => '冠军号码6',
+        5619 => '冠军号码7',
+        5620 => '冠军号码8',
+        5621 => '冠军号码9',
+        5622 => '冠军号码10',
+        5623 => '亚军号码1',
+        5624 => '亚军号码2',
+        5625 => '亚军号码3',
+        5626 => '亚军号码4',
+        5627 => '亚军号码5',
+        5628 => '亚军号码6',
+        5629 => '亚军号码7',
+        5630 => '亚军号码8',
+        5631 => '亚军号码9',
+        5632 => '亚军号码10',
+        5633 => '季军号码1',
+        5634 => '季军号码2',
+        5635 => '季军号码3',
+        5636 => '季军号码4',
+        5637 => '季军号码5',
+        5638 => '季军号码6',
+        5639 => '季军号码7',
+        5640 => '季军号码8',
+        5641 => '季军号码9',
+        5642 => '季军号码10',
+        5643 => '冠亚和值3',
+        5644 => '冠亚和值4',
+        5645 => '冠亚和值5',
+        5646 => '冠亚和值6',
+        5647 => '冠亚和值7',
+        5648 => '冠亚和值8',
+        5649 => '冠亚和值9',
+        5650 => '冠亚和值10',
+        5651 => '冠亚和值11',
+        5652 => '冠亚和值12',
+        5653 => '冠亚和值13',
+        5654 => '冠亚和值14',
+        5655 => '冠亚和值15',
+        5656 => '冠亚和值16',
+        5657 => '冠亚和值17',
+        5658 => '冠亚和值18',
+        5659 => '冠亚和值19',
+        // 多利
+        5701 => '闲1赢',
+        5702 => '闲2赢',
+        5703 => '闲3赢',
+        5704 => '闲1对',
+        5705 => '闲2对',
+        5706 => '闲3对',
+        // 走地德州
+        5801 => '第1轮高牌',
+        5802 => '第1轮一对',
+        5803 => '第1轮两对',
+        5804 => '第1轮三条',
+        5805 => '第1轮顺子',
+        5806 => '第1轮同花',
+        5807 => '第1轮葫芦',
+        5808 => '第1轮四条',
+        5809 => '第1轮同花顺',
+        5810 => '第1轮皇家同花顺',
+        5811 => '第1轮第1手牌',
+        5812 => '第1轮第2手牌',
+        5813 => '第1轮第3手牌',
+        5814 => '第1轮第5手牌',
+        5815 => '第1轮第6手牌',
+        5816 => '第1轮第7手牌',
+        5817 => '幸运七',
+        5818 => '超级幸运七',
+        5819 => '小龙',
+        5820 => '大龙',
+        5821 => '龙虎斗',
+        // 闪电百家乐
+        5751 => '庄',
+        5752 => '闲',
+        5753 => '和',
+        5754 => '庄对',
+        5755 => '闲对',
+        // 3D - 百位
+        5200 => '百位号码0',
+        5201 => '百位号码1',
+        5202 => '百位号码2',
+        5203 => '百位号码3',
+        5204 => '百位号码4',
+        5205 => '百位号码5',
+        5206 => '百位号码6',
+        5207 => '百位号码7',
+        5208 => '百位号码8',
+        5209 => '百位号码9',
+        // 3D - 十位
+        5210 => '十位号码0',
+        5211 => '十位号码1',
+        5212 => '十位号码2',
+        5213 => '十位号码3',
+        5214 => '十位号码4',
+        5215 => '十位号码5',
+        5216 => '十位号码6',
+        5217 => '十位号码7',
+        5218 => '十位号码8',
+        5219 => '十位号码9',
+        // 3D - 个位
+        5220 => '个位号码0',
+        5221 => '个位号码1',
+        5222 => '个位号码2',
+        5223 => '个位号码3',
+        5224 => '个位号码4',
+        5225 => '个位号码5',
+        5226 => '个位号码6',
+        5227 => '个位号码7',
+        5228 => '个位号码8',
+        5229 => '个位号码9',
+        // 3D - 百位大小单双
+        5230 => '百位大',
+        5231 => '百位小',
+        5232 => '百位单',
+        5233 => '百位双',
+        // 3D - 十位大小单双
+        5234 => '十位大',
+        5235 => '十位小',
+        5236 => '十位单',
+        5237 => '十位双',
+        // 3D - 个位大小单双
+        5238 => '个位大',
+        5239 => '个位小',
+        5240 => '个位单',
+        5241 => '个位双',
+        // 5D - 万位
+        5300 => '万位号码0',
+        5301 => '万位号码1',
+        5302 => '万位号码2',
+        5303 => '万位号码3',
+        5304 => '万位号码4',
+        5305 => '万位号码5',
+        5306 => '万位号码6',
+        5307 => '万位号码7',
+        5308 => '万位号码8',
+        5309 => '万位号码9',
+        // 5D - 千位
+        5310 => '千位号码0',
+        5311 => '千位号码1',
+        5312 => '千位号码2',
+        5313 => '千位号码3',
+        5314 => '千位号码4',
+        5315 => '千位号码5',
+        5316 => '千位号码6',
+        5317 => '千位号码7',
+        5318 => '千位号码8',
+        5319 => '千位号码9',
+        // 5D - 百位
+        5320 => '百位号码0',
+        5321 => '百位号码1',
+        5322 => '百位号码2',
+        5323 => '百位号码3',
+        5324 => '百位号码4',
+        5325 => '百位号码5',
+        5326 => '百位号码6',
+        5327 => '百位号码7',
+        5328 => '百位号码8',
+        5329 => '百位号码9',
+        // 5D - 十位
+        5330 => '十位号码0',
+        5331 => '十位号码1',
+        5332 => '十位号码2',
+        5333 => '十位号码3',
+        5334 => '十位号码4',
+        5335 => '十位号码5',
+        5336 => '十位号码6',
+        5337 => '十位号码7',
+        5338 => '十位号码8',
+        5339 => '十位号码9',
+        // 5D - 个位
+        5340 => '个位号码0',
+        5341 => '个位号码1',
+        5342 => '个位号码2',
+        5343 => '个位号码3',
+        5344 => '个位号码4',
+        5345 => '个位号码5',
+        5346 => '个位号码6',
+        5347 => '个位号码7',
+        5348 => '个位号码8',
+        5349 => '个位号码9',
+        // 5D - 万位大小单双
+        5350 => '万位大',
+        5351 => '万位小',
+        5352 => '万位单',
+        5353 => '万位双',
+        // 5D - 千位大小单双
+        5354 => '千位大',
+        5355 => '千位小',
+        5356 => '千位单',
+        5357 => '千位双',
+        // 5D - 百位大小单双
+        5358 => '百位大',
+        5359 => '百位小',
+        5360 => '百位单',
+        5361 => '百位双',
+        // 5D - 十位大小单双
+        5362 => '十位大',
+        5363 => '十位小',
+        5364 => '十位单',
+        5365 => '十位双',
+        // 5D - 个位大小单双
+        5366 => '个位大',
+        5367 => '个位小',
+        5368 => '个位单',
+        5369 => '个位双',
+        // 大转盘
+        5401 => '号码1',
+        5402 => '号码2',
+        5403 => '号码5',
+        5404 => '号码10',
+        5405 => '号码20',
+        5406 => '号码40',
+        // 六合彩 - 号码
+        5001 => '号码:1',
+        5002 => '号码:2',
+        5003 => '号码:3',
+        5004 => '号码:4',
+        5005 => '号码:5',
+        5006 => '号码:6',
+        5007 => '号码:7',
+        5008 => '号码:8',
+        5009 => '号码:9',
+        5010 => '号码:10',
+        5011 => '号码:11',
+        5012 => '号码:12',
+        5013 => '号码:13',
+        5014 => '号码:14',
+        5015 => '号码:15',
+        5016 => '号码:16',
+        5017 => '号码:17',
+        5018 => '号码:18',
+        5019 => '号码:19',
+        5020 => '号码:20',
+        5021 => '号码:21',
+        5022 => '号码:22',
+        5023 => '号码:23',
+        5024 => '号码:24',
+        5025 => '号码:25',
+        5026 => '号码:26',
+        5027 => '号码:27',
+        5028 => '号码:28',
+        5029 => '号码:29',
+        5030 => '号码:30',
+        5031 => '号码:31',
+        5032 => '号码:32',
+        5033 => '号码:33',
+        5034 => '号码:34',
+        5035 => '号码:35',
+        5036 => '号码:36',
+        5037 => '号码:37',
+        5038 => '号码:38',
+        5039 => '号码:39',
+        5040 => '号码:40',
+        5041 => '号码:41',
+        5042 => '号码:42',
+        5043 => '号码:43',
+        5044 => '号码:44',
+        5045 => '号码:45',
+        5046 => '号码:46',
+        5047 => '号码:47',
+        5048 => '号码:48',
+        5049 => '号码:49',
+        // 六合彩 - 生肖
+        5050 => '生肖:鼠',
+        5051 => '生肖:牛',
+        5052 => '生肖:虎',
+        5053 => '生肖:兔',
+        5054 => '生肖:龙',
+        5055 => '生肖:蛇',
+        5056 => '生肖:马',
+        5057 => '生肖:羊',
+        5058 => '生肖:猴',
+        5059 => '生肖:鸡',
+        5060 => '生肖:狗',
+        5061 => '生肖:猪',
+        // 六合彩 - 总和
+        5062 => '总和:大',
+        5063 => '总和:小',
+        5064 => '总和:单',
+        5065 => '总和:双',
+        // 六合彩 - 特码
+        5101 => '特码:1',
+        5102 => '特码:2',
+        5103 => '特码:3',
+        5104 => '特码:4',
+        5105 => '特码:5',
+        5106 => '特码:6',
+        5107 => '特码:7',
+        5108 => '特码:8',
+        5109 => '特码:9',
+        5110 => '特码:10',
+        5111 => '特码:11',
+        5112 => '特码:12',
+        5113 => '特码:13',
+        5114 => '特码:14',
+        5115 => '特码:15',
+        5116 => '特码:16',
+        5117 => '特码:17',
+        5118 => '特码:18',
+        5119 => '特码:19',
+        5120 => '特码:20',
+        5121 => '特码:21',
+        5122 => '特码:22',
+        5123 => '特码:23',
+        5124 => '特码:24',
+        5125 => '特码:25',
+        5126 => '特码:26',
+        5127 => '特码:27',
+        5128 => '特码:28',
+        5129 => '特码:29',
+        5130 => '特码:30',
+        5131 => '特码:31',
+        5132 => '特码:32',
+        5133 => '特码:33',
+        5134 => '特码:34',
+        5135 => '特码:35',
+        5136 => '特码:36',
+        5137 => '特码:37',
+        5138 => '特码:38',
+        5139 => '特码:39',
+        5140 => '特码:40',
+        5141 => '特码:41',
+        5142 => '特码:42',
+        5143 => '特码:43',
+        5144 => '特码:44',
+        5145 => '特码:45',
+        5146 => '特码:46',
+        5147 => '特码:47',
+        5148 => '特码:48',
+        5149 => '特码:49',
+        // 六合彩 - 特肖
+        5150 => '特肖:鼠',
+        5151 => '特肖:牛',
+        5152 => '特肖:虎',
+        5153 => '特肖:兔',
+        5154 => '特肖:龙',
+        5155 => '特肖:蛇',
+        5156 => '特肖:马',
+        5157 => '特肖:羊',
+        5158 => '特肖:猴',
+        5159 => '特肖:鸡',
+        5160 => '特肖:狗',
+        5161 => '特肖:猪',
+        // 六合彩 - 特码大小单双
+        5162 => '特码:大',
+        5163 => '特码:小',
+        5164 => '特码:单',
+        5165 => '特码:双',
+    ];
+
     protected $db_code;
     protected $merchant_code;
     protected $secret_key; // MD5签名密钥
@@ -554,22 +1420,118 @@ class DbzhenrenService
         }
 
         try {
-            // 调用回调函数处理下注确认
-            $result = $betConfirmCallback ? call_user_func($betConfirmCallback, $transferNo, $loginName, $betTotalAmount, $betInfo, $gameTypeId, $roundNo, $betTime, $currency) : ['success' => false, 'message' => '回调函数未设置'];
+            // 从loginName中移除merchant_code前缀（只移除开头的）
+            $api_user = $loginName;
+            if (!empty($this->merchant_code)) {
+                $merchantCodeLower = strtolower($this->merchant_code);
+                $loginNameLower = strtolower($loginName);
+                if (strpos($loginNameLower, $merchantCodeLower) === 0) {
+                    $api_user = substr($loginName, strlen($this->merchant_code));
+                }
+            }
 
-            if (!$result['success']) {
-                // 余额不足
+            // 查找用户API记录
+            $userApi = User_Api::where('api_user', $api_user)
+                ->where('api_code', $this->db_code)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$userApi) {
+                Log::warning('Dbzhenren betConfirm 用户不存在', [
+                    'loginName' => $loginName,
+                    'api_user' => $api_user,
+                    'api_code' => $this->db_code
+                ]);
                 return json_encode([
                     'code' => 1002,
-                    'message' => $result['message'] ?? '余额不足'
+                    'message' => '余额不足'
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
+            // 获取用户信息
+            $user = User::find($userApi->user_id);
+            if (!$user) {
+                Log::error('Dbzhenren betConfirm 用户记录不存在', [
+                    'user_id' => $userApi->user_id
+                ]);
+                return json_encode([
+                    'code' => 1002,
+                    'message' => '余额不足'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+
+            // 检查余额是否足够
+            $betTotalAmountFloat = floatval($betTotalAmount);
+            $currentBalance = floatval($userApi->api_money);
+
+            if ($currentBalance < $betTotalAmountFloat) {
+                Log::warning('Dbzhenren betConfirm 余额不足', [
+                    'loginName' => $loginName,
+                    'api_user' => $api_user,
+                    'current_balance' => $currentBalance,
+                    'bet_total_amount' => $betTotalAmountFloat
+                ]);
+                return json_encode([
+                    'code' => 1002,
+                    'message' => '余额不足'
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+
+            // 减少余额
+            $newBalance = $currentBalance - $betTotalAmountFloat;
+            $userApi->api_money = $newBalance;
+            $userApi->save();
+
+            // 将betTime从毫秒时间戳转换为datetime
+            $betTimeSeconds = intval($betTime / 1000);
+            $betTimeDatetime = date('Y-m-d H:i:s', $betTimeSeconds);
+
+            // 构建realBetInfo（用于返回）
+            $realBetInfo = [];
+            
+            // 写入game_records表（每个betInfo项一条记录）
+            foreach ($betInfo as $betItem) {
+                $betId = $betItem['betId'] ?? '';
+                $betAmount = floatval($betItem['betAmount'] ?? 0);
+                $betPointId = $betItem['betPointId'] ?? 0;
+
+                // 构建realBetInfo
+                $realBetInfo[] = [
+                    'betId' => $betId,
+                    'betAmount' => $betAmount,
+                    'betPointId' => $betPointId
+                ];
+
+                // 写入game_records表
+                GameRecord::create([
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'bet_id' => (string)$betId,
+                    'transfer_no' => $transferNo,
+                    'round_no' => $roundNo,
+                    'bet_point_id' => $betPointId,
+                    'bet_point_name' => isset($this->betPoints[$betPointId]) ? $this->betPoints[$betPointId] : '',
+                    'game_type_id' => $gameTypeId,
+                    'game_type_name' => isset($this->gameTypes[$gameTypeId]) ? $this->gameTypes[$gameTypeId] : '',
+                    'game_code' => (string)$gameTypeId, // 添加game_code字段
+                    'platform_type' => $this->db_code,
+                    'game_type' => 'realbet', // 根据实际情况调整
+                    'bet_time' => $betTimeDatetime,
+                    'bet_amount' => $betAmount,
+                    'valid_amount' => $betAmount,
+                    'win_loss' => 0,
+                    'status' => 2, // 0=未结算
+                    'is_back' => 0,
+                    'before_amount' => $currentBalance,
+                ]);
+            }
+
+            // 构建返回数据
             $data = [
                 'loginName' => $loginName,
-                'balance' => round($result['balance'], 4),
-                'realBetAmount' => round($result['realBetAmount'], 4),
-                'realBetInfo' => $result['realBetInfo']
+                'balance' => round($newBalance, 4),
+                'realBetAmount' => round($betTotalAmountFloat, 4),
+                'realBetInfo' => $realBetInfo
             ];
 
             // 将data转为JSON字符串
@@ -578,10 +1540,10 @@ class DbzhenrenService
             // 对data参数进行签名（使用md5_key）
             $responseSignature = $this->generateMd5KeySign($dataJson);
 
-            // 构建成功响应
+            // 构建成功响应（根据用户要求，message应该是"成功"）
             $response = [
                 'code' => 200,
-                'message' => 'Success',
+                'message' => '成功',
                 'data' => $dataJson,
                 'signature' => $responseSignature
             ];
@@ -589,6 +1551,11 @@ class DbzhenrenService
             Log::info('Dbzhenren betConfirm 处理成功', [
                 'transferNo' => $transferNo,
                 'loginName' => $loginName,
+                'api_user' => $api_user,
+                'bet_total_amount' => $betTotalAmountFloat,
+                'before_balance' => $currentBalance,
+                'after_balance' => $newBalance,
+                'bet_records_count' => count($betInfo),
                 'response' => $response
             ]);
 
@@ -598,11 +1565,12 @@ class DbzhenrenService
             Log::error('Dbzhenren betConfirm 处理异常', [
                 'transferNo' => $transferNo,
                 'loginName' => $loginName,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return json_encode([
-                'code' => 90000,
-                'message' => '处理失败：' . $e->getMessage()
+                'code' => 1002,
+                'message' => '余额不足'
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
     }
@@ -688,7 +1656,7 @@ class DbzhenrenService
             // 调用回调函数处理取消下注
             $result = $betCancelCallback ? call_user_func($betCancelCallback, $transferNo, $loginName, $gameTypeId, $roundNo, $cancelTime, $currency, $betPayoutMap, $hasTransferOut) : ['success' => false, 'message' => '回调函数未设置'];
 
-            if (!$result['success']) {
+            if (!isset($result['success']) || !$result['success']) {
                 return json_encode([
                     'code' => 90000,
                     'message' => $result['message'] ?? '处理失败'
@@ -1011,14 +1979,9 @@ class DbzhenrenService
      * 从 POST 请求中获取参数
      * 直接返回 JSON 格式响应，不依赖系统返回规则
      * 
-     * @param array $requestData 请求数据（可选，如果不传则从 request() 获取）
-     * @param callable $playerbettingCallback 下注推送回调函数
-     *   function($changePayout, $bettingRecordList) {
-     *     return ['success' => true];
-     *   }
      * @return string JSON 格式字符串
      */
-    public function playerBetting($requestData = null, $playerbettingCallback = null)
+    public function playerBetting()
     {
         // 从 POST 请求中获取参数
         $request = request();
@@ -1075,14 +2038,162 @@ class DbzhenrenService
         }
 
         try {
-            // 调用回调函数处理下注推送
-            $result = $playerbettingCallback ? call_user_func($playerbettingCallback, $paramsData) : ['success' => false, 'message' => '回调函数未设置'];
+            // 处理下注推送数据
+            // paramsData 是一个数组，每个元素包含 changePayout 和 bettingRecordList
+            // changePayout 包含：transferNo, transferType, gameTypeId, roundNo, playerId, loginName, payoutTime, payoutAmount, currency
+            // bettingRecordList 是一个数组，包含多个投注记录
+            
+            Log::info('Dbzhenren playerBetting 处理数据', [
+                'params_data' => $paramsData,
+                'data_count' => count($paramsData)
+            ]);
 
-            if (!$result['success']) {
-                return json_encode([
-                    'code' => 90000,
-                    'message' => $result['message'] ?? '处理失败'
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            // 遍历 paramsData 数组，处理每个 changePayout 和 bettingRecordList
+            foreach ($paramsData as $item) {
+                $changePayout = $item['changePayout'] ?? [];
+                $bettingRecordList = $item['bettingRecordList'] ?? [];
+
+                if (empty($changePayout) || empty($bettingRecordList)) {
+                    Log::warning('Dbzhenren playerBetting 数据格式错误', [
+                        'changePayout' => $changePayout,
+                        'bettingRecordList' => $bettingRecordList
+                    ]);
+                    continue;
+                }
+
+                $transferNo = $changePayout['transferNo'] ?? '';
+                $transferType = $changePayout['transferType'] ?? '';
+                $loginName = $changePayout['loginName'] ?? '';
+                
+                // 从loginName中移除merchant_code前缀（只移除开头的）
+                $api_user = $loginName;
+                if (!empty($this->merchant_code)) {
+                    $merchantCodeLower = strtolower($this->merchant_code);
+                    $loginNameLower = strtolower($loginName);
+                    if (strpos($loginNameLower, $merchantCodeLower) === 0) {
+                        $api_user = substr($loginName, strlen($this->merchant_code));
+                    }
+                }
+
+                // 查找用户API记录
+                $userApi = User_Api::where('api_user', $api_user)
+                    ->where('api_code', $this->db_code)
+                    ->first();
+
+                if (!$userApi) {
+                    Log::warning('Dbzhenren playerBetting 用户不存在', [
+                        'loginName' => $loginName,
+                        'api_user' => $api_user,
+                        'api_code' => $this->db_code
+                    ]);
+                    continue;
+                }
+
+                // 获取用户信息
+                $user = User::find($userApi->user_id);
+                if (!$user) {
+                    Log::error('Dbzhenren playerBetting 用户记录不存在', [
+                        'user_id' => $userApi->user_id
+                    ]);
+                    continue;
+                }
+
+                // 处理每个投注记录
+                foreach ($bettingRecordList as $bettingRecord) {
+                    // 根据 zhenren.md，只有 recordType 为 1（正式）的记录才会返回给商户
+                    $recordType = $bettingRecord['recordType'] ?? 0;
+                    if ($recordType != 1) {
+                        Log::info('Dbzhenren playerBetting 跳过非正式记录', [
+                            'bettingRecord' => $bettingRecord,
+                            'recordType' => $recordType
+                        ]);
+                        continue;
+                    }
+
+                    $betId = (string)($bettingRecord['id'] ?? '');
+                    if (empty($betId)) {
+                        Log::warning('Dbzhenren playerBetting betId 为空', [
+                            'bettingRecord' => $bettingRecord
+                        ]);
+                        continue;
+                    }
+
+                    // 根据 bet_id 查找或创建记录
+                    $gameRecord = GameRecord::where('bet_id', $betId)
+                        ->where('platform_type', $this->db_code)
+                        ->first();
+
+                    // 准备数据
+                    $recordData = [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'bet_id' => $betId,
+                        'transfer_no' => $transferNo ? (string)$transferNo : null,
+                        'round_no' => $bettingRecord['roundNo'] ?? $changePayout['roundNo'] ?? null,
+                        'bet_point_id' => $bettingRecord['betPointId'] ?? null,
+                        'bet_point_name' => isset($bettingRecord['betPointId']) && isset($this->betPoints[$bettingRecord['betPointId']]) 
+                            ? $this->betPoints[$bettingRecord['betPointId']] 
+                            : ($bettingRecord['betPointName'] ?? ''),
+                        'game_type_id' => $bettingRecord['gameTypeId'] ?? $changePayout['gameTypeId'] ?? null,
+                        'game_type_name' => isset($bettingRecord['gameTypeId']) && isset($this->gameTypes[$bettingRecord['gameTypeId']]) 
+                            ? $this->gameTypes[$bettingRecord['gameTypeId']] 
+                            : ($bettingRecord['gameTypeName'] ?? ''),
+                        'game_code' => isset($bettingRecord['gameTypeId']) ? (string)$bettingRecord['gameTypeId'] : '',
+                        'platform_id' => $bettingRecord['platformId'] ?? null,
+                        'platform_name' => isset($bettingRecord['platformId']) && isset($this->Halls[$bettingRecord['platformId']]) 
+                            ? $this->Halls[$bettingRecord['platformId']] 
+                            : ($bettingRecord['platformName'] ?? ''),
+                        'player_id' => $bettingRecord['playerId'] ?? $changePayout['playerId'] ?? null,
+                        'bet_flag' => $bettingRecord['betFlag'] ?? 0,
+                        'table_code' => $bettingRecord['tableCode'] ?? null,
+                        'boot_no' => $bettingRecord['bootNo'] ?? null,
+                        'judge_result' => $bettingRecord['judgeResult'] ?? null,
+                        'login_ip' => $bettingRecord['loginIp'] ?? null,
+                        'bet_amount' => floatval($bettingRecord['betAmount'] ?? 0),
+                        'valid_amount' => floatval($bettingRecord['validBetAmount'] ?? $bettingRecord['betAmount'] ?? 0),
+                        'win_loss' => floatval($bettingRecord['netAmount'] ?? 0),
+                        'before_amount' => floatval($bettingRecord['beforeAmount'] ?? 0),
+                        'pay_amount' => floatval($bettingRecord['payAmount'] ?? 0),
+                        'platform_type' => $this->db_code,
+                        'game_type' => 'realbet',
+                        'status' => $bettingRecord['betStatus'] ?? 0, // 0=未结算 1=已结算 2=取消注单
+                        'is_back' => 0,
+                    ];
+
+                    // 根据 transferType 调整状态
+                    // PAYOUT=正常结算；DISCARD=跳局结算；CANCEL=取消局；REPAYOUT=重算局
+                    if ($transferType === 'CANCEL') {
+                        $recordData['status'] = 2; // 取消注单
+                    } elseif ($transferType === 'PAYOUT' || $transferType === 'DISCARD' || $transferType === 'REPAYOUT') {
+                        $recordData['status'] = 1; // 已结算
+                    }
+
+                    // payoutTime 转换为 datetime
+                    if (isset($changePayout['payoutTime']) && $changePayout['payoutTime'] > 0) {
+                        $payoutTimeSeconds = intval($changePayout['payoutTime'] / 1000);
+                        $recordData['bet_time'] = date('Y-m-d H:i:s', $payoutTimeSeconds);
+                    } else {
+                        $recordData['bet_time'] = date('Y-m-d H:i:s');
+                    }
+
+                    if ($gameRecord) {
+                        // 更新现有记录
+                        $gameRecord->update($recordData);
+                        Log::info('Dbzhenren playerBetting 更新记录', [
+                            'bet_id' => $betId,
+                            'transfer_no' => $transferNo,
+                            'transfer_type' => $transferType
+                        ]);
+                    } else {
+                        // 创建新记录
+                        GameRecord::create($recordData);
+                        Log::info('Dbzhenren playerBetting 创建记录', [
+                            'bet_id' => $betId,
+                            'transfer_no' => $transferNo,
+                            'transfer_type' => $transferType
+                        ]);
+                    }
+                }
             }
 
             $data = [
@@ -1870,11 +2981,12 @@ class DbzhenrenService
      */
     private function sendDataRequest($method, $params, $pageIndex = 1)
     {
-        if (empty($this->api_url)) {
-            Log::error('Dbzhenren API URL未配置');
+        // 数据接口使用 api_data_url
+        if (empty($this->api_data_url)) {
+            Log::error('Dbzhenren API Data URL未配置');
             return [
                 'code' => -1,
-                'message' => 'API URL未配置'
+                'message' => 'API Data URL未配置'
             ];
         }
 
@@ -1889,7 +3001,8 @@ class DbzhenrenService
             'pageIndex: ' . $pageIndex
         ];
 
-        $url = $this->getApiUrl('/data/merchant/' . $method . '/v1');
+        // 直接使用 api_data_url 构建URL
+        $url = rtrim($this->api_data_url, '/') . '/data/merchant/' . $method . '/v1';
         
         // 使用sendRequest方法，它会自动对业务参数进行加密和签名
         return $this->sendRequest($url, $params, 'POST', 'application/json', $headers, true);

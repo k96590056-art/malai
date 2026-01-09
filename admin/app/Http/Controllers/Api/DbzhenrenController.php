@@ -94,11 +94,7 @@ class DbzhenrenController extends Controller
      */
     public function playerBetting(Request $request)
     {
-        $result = $this->service->playerBetting(null, function($requestData) {
-            // 这里需要实现实际的下注推送处理逻辑
-            // 返回格式：['success' => true]
-            return ['success' => true];
-        });
+        $result = $this->service->playerBetting();
         return response($result, 200)->header('Content-Type', 'application/json');
     }
 
