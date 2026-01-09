@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html  lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="edge">
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+	<title></title>
+	<!-- Telegram Web App SDK - 必须加载才能使用 Telegram Mini App 功能 -->
+	<script src="https://telegram.org/js/telegram-web-app.js"></script>
+	<script>
+		// 在 Vue Router 初始化前保存 Telegram 数据（防止被 hash 路由覆盖）
+		(function() {
+			if (window.Telegram && window.Telegram.WebApp) {
+				var webApp = window.Telegram.WebApp;
+				// 保存 initData 到全局变量
+				window.__TELEGRAM_INIT_DATA__ = webApp.initData || '';
+				window.__TELEGRAM_INIT_DATA_UNSAFE__ = webApp.initDataUnsafe || {};
+				console.log('[Telegram预保存] initData长度:', window.__TELEGRAM_INIT_DATA__.length);
+				console.log('[Telegram预保存] user:', JSON.stringify(window.__TELEGRAM_INIT_DATA_UNSAFE__.user || {}));
+			}
+		})();
+	</script>
+	<!-- <link rel="shortcut icon" type="image/x-icon" id="iconconfig"
+		href="/static/image/uacPoGJlcBWACL_fAAAlvjvOsR4020.ico"> -->
+
+
+
+
+	<style>
+		*{
+			font-size: 12px;
+		}
+		#redPacket {
+			position: fixed;
+			right: 12px;
+			bottom: 60px;
+			width: 75px;
+			height: 85px;
+			z-index: 999;
+			cursor: pointer;
+			background: url(/static/image/red-packet.png);
+			background-size: 100% 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		#redPacket .grab {
+
+			margin-top: 20px;
+			width: 35px;
+			height: 20px;
+			padding-top: 20px;
+			background: url(/static/image/grab.png)no-repeat center;
+			background-size: 100% 100%;
+			-webkit-animation: scaleDraw .4s linear infinite;
+		}
+
+		#redPacket img {
+			position: absolute;
+			top: 0;
+			right: -10px;
+			width: 20px;
+			-webkit-filter: grayscale(100%);
+			-moz-filter: grayscale(100%);
+			-ms-filter: grayscale(100%);
+			-o-filter: grayscale(100%);
+			filter: grayscale(100%);
+			filter: gray;
+
+		}
+
+		@keyframes scaleDraw {
+			25% {
+				transform: scale(1.1);
+			}
+
+			50% {
+				transform: scale(1.2);
+			}
+
+			75% {
+				transform: scale(1.1);
+			}
+
+			100% {
+				transform: scale(1);
+			}
+		}
+	</style>
+	<link rel="stylesheet" type="text/css" href="/static/css/swiper.css">
+	<script src="/static/js/jquery-1.8.2.js"></script>
+	<script src="/static/js/swiper.min.js"></script>
+</head>
+
+<body >
+
+	<div id="app"></div>
+</body>
+
+</html>
+
+<script>
+
+
+</script>

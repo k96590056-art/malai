@@ -1,0 +1,1 @@
+<div class="help-block with-errors"></div><?php /**PATH D:\www\bob\v2\admin\vendor\dcat\laravel-admin\src/../resources/views/form/error.blade.php ENDPATH**/ ?>

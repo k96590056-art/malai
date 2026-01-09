@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no,viewport-fit=cover,viewport-fit=cover"
+    />
+    <meta name="screen-orientation" content="portrait" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta content="black" name="apple-mobile-web-app-status-bar-style" />
+    <meta content="telephone=no" name="format-detection" />
+    <meta name="format-detection" content="telephone=no " />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge " />
+    <title></title>
+    <script>
+      (function flexible(window, document) {
+        var docEl = document.documentElement;
+        function setRemUnit() {
+          var rem = docEl.clientWidth / 7.5;
+          docEl.style.fontSize = rem + 'px';
+        }
+        setRemUnit();
+        // reset rem unit on page resize
+        window.addEventListener('resize', setRemUnit);
+        window.addEventListener('pageshow', function (e) {
+          if (e.persisted) {
+            setRemUnit();
+          }
+        });
+      })(window, document);
+    </script>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <div id="alert"></div>
+    <div id="toast"></div>
+    <div id="loading"></div>
+    <div id="pickerM"></div>
+    <script>
+      var __checkImg__;
+      var BASEURL = '//';
+      var staticFiles = {
+        css: [
+          '/lib/font/font.css?v=1648639514590&nginx-cdn-origin=https://senbackkg.valve33.com',
+          '/lib/css/base.css?v=1648639514590&nginx-cdn-origin=https://senbackkg.valve33.com',
+          '/lib/css/slick/slick.css?v=1648639514590&nginx-cdn-origin=https://senbackkg.valve33.com',
+          '/lib/css/slick/slick-theme.css?v=1648639514590&nginx-cdn-origin=https://senbackkg.valve33.com',
+          '/lib/css/font/font.css?v=1648639514590&nginx-cdn-origin=https://senbackkg.valve33.com',
+        ],
+      };
+      var entryFiles = '{"publicPath":"/js/","chunks":{"runtime":{"size":0,"entry":"/js/runtime.a83cf9b7.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","hash":"55be889f3e87c3854a65","css":[]},"utils~index":{"size":1473364,"entry":"/js/utils~index.5cb015b8.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","hash":"54fbc70b35d8ab112e81","css":[]},"commons~index":{"size":252230,"entry":"/js/commons~index.a32c63c9.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","hash":"4820830fb77355157320","css":[]},"vendors~index":{"size":3160782,"entry":"/js/vendors~index.6e0a63bc.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","hash":"40bbf1797449b650ff03","css":["/js/../css/vendors~index.f34b9446.css?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com"]},"index":{"size":1215341,"entry":"/js/index.359444f0.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","hash":"ba641861e2d0c393388c","css":["/js/../css/index.8519febc.css?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com"]}},"js":["/js/runtime.a83cf9b7.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","/js/utils~index.5cb015b8.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","/js/commons~index.a32c63c9.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","/js/vendors~index.6e0a63bc.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","/js/index.359444f0.js?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com"],"css":["/js/../css/vendors~index.f34b9446.css?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com","/js/../css/index.8519febc.css?v=v1&nginx-cdn-origin=https://senbackkg.valve33.com"]}';
+
+      if (BASEURL.indexOf('ngnixreplacehere') > -1) {
+        BASEURL = null;
+      }
+
+      if (BASEURL === '//') {
+        BASEURL = null;
+      }
+
+      if (BASEURL) {
+        creatBase(BASEURL);
+      }
+
+      getStaticFiles(staticFiles);
+      getEntryFiles(entryFiles);
+
+      function getStaticFiles(_files) {
+        _files.css.forEach((_href) => {
+          creatLink(_href);
+        });
+      }
+
+      function getEntryFiles(_files) {
+        _files = JSON.parse(_files);
+        // webpack 入口文件所需资源
+        _files.js.forEach((_src) => {
+          creatScript(_src);
+        });
+        _files.css.forEach((_href) => {
+          creatLink(_href);
+        });
+      }
+
+      function creatBase(src) {
+        // 配合__webpack_public_path__动态设置全局根路径
+        window.DOMAIN = src;
+      }
+
+      function creatScript(src) {
+        var _script = document.createElement('script');
+        _script.src = window.DOMAIN ? window.DOMAIN + src : src;
+        _script.onload = function () {
+          if (src.indexOf('sdk') > 0) {
+            setImgPath('/lib/road/img/');
+          }
+        };
+        document.body.appendChild(_script);
+      }
+
+      function creatLink(_href) {
+        var _link = document.createElement('link');
+        _link.href = window.DOMAIN ? window.DOMAIN + _href : _href;
+        _link.rel = 'stylesheet';
+        document.head.appendChild(_link);
+      }
+    </script>
+    
+        <script>
+          let siDebugger = undefined
+
+          function disableDebugger() {
+            clearInterval(siDebugger)
+            return '解除防调试'
+          }
+
+          !function () {
+            let _0x1cbb = ["tor", "struc", "call", "ger", "con", "bug", "de", "apply"];
+            siDebugger = setInterval(() => {
+              check()
+            }, 2e3);
+
+            function check() {
+              function doCheck(a) {
+                if (("" + a / a)["length"] !== 1 || a % 20 === 0) {
+                  /*(function() {}
+                    ["constructor"]("debugger")())*/
+                  (function () {
+                    debugger
+                  })()
+                } else {
+                  (function () {
+                    debugger
+                  })()
+                }
+                doCheck(++a)
+              }
+
+              try {
+                doCheck(0)
+              } catch (err) {
+              }
+            }
+          }()
+        </script>
+    
+  </body>
+</html>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="345px" height="579px" viewBox="0 0 345 579" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>h5-抽奖活动-切图</title>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" offset="0%"></stop>
+            <stop stop-color="#F6E2D6" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="66.8580746%" y1="4.74121094%" x2="63.8462182%" y2="40.9985352%" id="linearGradient-2">
+            <stop stop-color="#FFFFFF" offset="0%"></stop>
+            <stop stop-color="#FBEFDE" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+        <rect id="path-3" x="0" y="0" width="345" height="579" rx="20"></rect>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-4">
+            <stop stop-color="#FFFFFF" offset="0%"></stop>
+            <stop stop-color="#FCFBFB" offset="100%"></stop>
+        </linearGradient>
+        <rect id="path-5" x="0" y="0" width="345" height="579" rx="20"></rect>
+        <linearGradient x1="50%" y1="39.7503669%" x2="59.3077843%" y2="48.6343625%" id="linearGradient-7">
+            <stop stop-color="#F0E4D5" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#E4DBCE" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="49.4869088%" y1="39.0935851%" x2="40.3515625%" y2="55.450538%" id="linearGradient-8">
+            <stop stop-color="#F0E4D5" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#F0E4D5" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="29.6271897%" x2="53.2429101%" y2="47.2855738%" id="linearGradient-9">
+            <stop stop-color="#F0E4D5" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#E4DBCE" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="34.3445087%" y1="25.8893527%" x2="71.719084%" y2="21.1452454%" id="linearGradient-10">
+            <stop stop-color="#F0E4D5" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#F0E4D5" offset="100%"></stop>
+            <stop stop-color="#F0E4D5" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="62.7172258%" y1="14.6924985%" x2="75.6649262%" y2="24.1870594%" id="linearGradient-11">
+            <stop stop-color="#F0E4D5" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#F0E4D5" offset="100%"></stop>
+            <stop stop-color="#F0E4D5" offset="100%"></stop>
+        </linearGradient>
+        <rect id="path-12" x="2" y="1" width="343" height="314" rx="20"></rect>
+    </defs>
+    <g id="AOA-h5-抽奖活动" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Path-2">
+            <g id="Mask">
+                <use fill="url(#linearGradient-1)" xlink:href="#path-3"></use>
+                <use fill="url(#linearGradient-2)" xlink:href="#path-3"></use>
+            </g>
+            <mask id="mask-6" fill="white">
+                <use xlink:href="#path-5"></use>
+            </mask>
+            <use id="Mask" fill="url(#linearGradient-4)" xlink:href="#path-5"></use>
+            <polygon fill-opacity="0.4" fill="url(#linearGradient-7)" opacity="0.350795201" mask="url(#mask-6)" points="457.992188 -10 92 355.992187 -58 -10"></polygon>
+            <polygon fill-opacity="0.4" fill="url(#linearGradient-8)" mask="url(#mask-6)" transform="translate(756.000000, 135.613281) scale(-1, 1) translate(-756.000000, -135.613281) " points="1311 -285.386719 201 556.613281 201 -285.386719"></polygon>
+            <polygon fill-opacity="0.4" fill="url(#linearGradient-9)" mask="url(#mask-6)" transform="translate(492.500000, 319.613281) scale(-1, 1) translate(-492.500000, -319.613281) " points="741 -101.386719 244 740.613281 244 -101.386719"></polygon>
+            <polygon id="Path-3" fill-opacity="0.4" fill="url(#linearGradient-10)" mask="url(#mask-6)" points="173.503906 -10 -122 337.589844 -61.5429687 -62.4335938"></polygon>
+            <polygon id="Path-3" fill-opacity="0.4" fill="url(#linearGradient-11)" mask="url(#mask-6)" transform="translate(105.751953, 137.578125) scale(-1, 1) translate(-105.751953, -137.578125) " points="253.503906 -10 -42 337.589844 18.4570313 -62.4335938"></polygon>
+            <mask id="mask-13" fill="white">
+                <use xlink:href="#path-12"></use>
+            </mask>
+            <g id="Mask" opacity="0.133928571"></g>
+        </g>
+    </g>
+</svg>

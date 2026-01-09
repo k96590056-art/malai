@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="31px" viewBox="0 0 24 31" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>icon-baocuntupian</title>
+    <defs>
+        <linearGradient x1="80.8310811%" y1="98.1735642%" x2="18%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#7EA4D1" offset="0%"></stop>
+            <stop stop-color="#D4E4F6" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="H5端-回流活动" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="K系列【H5】-回流活动-分享弹窗" transform="translate(-104.000000, -643.000000)" fill="url(#linearGradient-1)">
+            <g id="ActionSheet/View/ToolsSheet_1-Row" transform="translate(0.000000, 608.000000)">
+                <g id="ActionSheet/View/_resource/ActionItem" transform="translate(86.000000, 20.000000)">
+                    <g id="icon-baocuntupian" transform="translate(18.000000, 15.000000)">
+                        <path d="M10.9333333,22.6363636 C11.4666667,23.3181818 12.5333333,23.3181818 13.0666667,22.6363636 L21.0666667,14.0454546 C21.7333333,13.3636364 21.0666667,12.2727273 20,12.2727273 L14.6666667,12.2727273 C14.6666667,12.2727273 14.9333333,6 14.6666667,2.72727272 C14.5333333,1.22727273 13.4666667,0 12,0 C10.5333333,0 9.46666666,1.22727273 9.33333334,2.72727272 C9.06666669,5.86363634 9.33333334,12.2727273 9.33333334,12.2727273 L4,12.2727273 C2.93333334,12.2727273 2.26666666,13.3636363 2.93333334,14.1818182 L10.9333333,22.6363636 Z M21.3333333,25.9090909 L2.66666666,25.9090909 C1.2,25.9090909 0,27.1363636 0,28.6363636 C0,29.4545454 0.533333344,30 1.33333334,30 L22.6666667,30 C23.4666667,30 24,29.4545454 24,28.6363636 C24,27.1363636 22.8,25.9090909 21.3333333,25.9090909 Z" id="形状"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,32 @@
+@extends('agent.layouts.agent_template')
+
+@section('content')
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h5>站内信</h5>
+</div>
+
+<!-- DataTales Example -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">站内信内容</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <tbody>
+                    <tr>
+                        <td align="center"><b>{{ $item->title }}</b></td>
+                    </tr>
+                    <tr>
+                        <td align="center">发布时间：{{$item->created_at}}</td>
+                    </tr>
+                    <tr>
+                        <td>{!! $item->content !!}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endsection
