@@ -62,10 +62,6 @@ class IndexController extends Controller
         }
     }
     
-    public function test(){
-        echo 123;die;
-    }
-    
     public function credit(Request $request)
     {
         $api_code = $request->input('api_code');

@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 
-Route::any('/test','Api\IndexController@test');
+Route::any('/test','Api\TestController@test');
 
 Route::post('/db/tiyu/balance',                 'Service\DbcaipiaoService@upateBalance');
 Route::post('/db/tiyu/transfer',                   'Service\DbcaipiaoService@getBalance');
