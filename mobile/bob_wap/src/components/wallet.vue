@@ -7,7 +7,6 @@
       @click-left="$router.back()" 
     />
     <div class="nav-bar-placeholder"></div>
-
     <van-tabs v-model="type" >
       <van-tab title="虚拟币" name='1'>
         <div class="lis" v-for="(item, index) in usdssLis" :key="index">

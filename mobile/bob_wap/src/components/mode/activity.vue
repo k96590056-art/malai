@@ -68,6 +68,17 @@ export default {
   },
   mounted() {
     let that = this;
+    // 直接操作 DOM 移除内边距
+    that.$nextTick(() => {
+      const navElements = document.querySelectorAll('.topsa .van-tabs__nav--line.van-tabs__nav--complete');
+      navElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.paddingLeft = '0';
+          el.style.paddingRight = '0';
+          el.style.padding = '0';
+        }
+      });
+    });
   },
   updated() {
     let that = this;
@@ -76,7 +87,51 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-// @import '../../../static/css/dashboard-activity.b2be1233.css';
+  .topsa :deep(.van-tabs__nav) {
+    padding: 0px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  // 强制移除 .van-tabs__nav--line.van-tabs__nav--complete 的左右内边距
+  .topsa :deep(.van-tabs__nav--line.van-tabs__nav--complete) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  .topsa :deep(.van-tabs__nav.van-tabs__nav--line.van-tabs__nav--complete) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  // 更具体的选择器，确保覆盖所有可能的样式
+  .topsa :deep(.van-tabs__wrap .van-tabs__nav--line.van-tabs__nav--complete) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  .topsa :deep(.van-tabs__wrap .van-tabs__nav.van-tabs__nav--line.van-tabs__nav--complete) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  // 直接针对所有包含这些类的元素
+  .topsa :deep([class*="van-tabs__nav--line"][class*="van-tabs__nav--complete"]) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  // 使用属性选择器确保覆盖
+  .topsa :deep(div[role="tablist"].van-tabs__nav--line.van-tabs__nav--complete) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  // 针对所有可能的变体
+  .topsa :deep(.van-tabs__nav--complete) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
 .acts {
   width: 100%;
   min-height: 100vh;
@@ -92,8 +147,8 @@ export default {
   top: 0;
   left: 0;
   width: 100%;
-  height: 40px;
-  line-height: 40px;
+  height: 50px;
+  line-height: 50px;
   text-align: center;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
@@ -104,7 +159,7 @@ export default {
 
 .topsa {
   position: fixed;
-  top: 40px;
+  top: 49px;
   left: 0;
   width: 100%;
   z-index: 200;
@@ -112,6 +167,13 @@ export default {
   :deep(.van-tabs__wrap) {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  :deep(.van-tabs) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
   
   :deep(.van-tab) {
@@ -125,12 +187,8 @@ export default {
   :deep(.van-tabs__line) {
     background-color: #9d4edd;
   }
-  
-  :deep(.van-tabs__nav--line.van-tabs__nav--complete) {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
 }
+
 .consg {
   padding: 90px 15px 120px 15px;
   .lis {
@@ -166,6 +224,56 @@ export default {
   
   :deep(.van-divider__line) {
     border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+}
+</style>
+
+<style lang="scss">
+// 全局样式，确保覆盖所有情况
+.topsa {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  
+  .van-tabs {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  .van-tabs__wrap {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  .van-tabs__nav--line.van-tabs__nav--complete {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .van-tabs__nav.van-tabs__nav--line.van-tabs__nav--complete {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .van-tabs__wrap .van-tabs__nav--line.van-tabs__nav--complete {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .van-tabs__wrap .van-tabs__nav.van-tabs__nav--line.van-tabs__nav--complete {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  // 使用属性选择器
+  [class*="van-tabs__nav--line"][class*="van-tabs__nav--complete"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  // 针对所有可能的元素
+  div[role="tablist"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 </style>

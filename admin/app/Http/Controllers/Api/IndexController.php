@@ -61,6 +61,11 @@ class IndexController extends Controller
             // 实际的域名验证应该在具体的请求方法中进行
         }
     }
+    
+    public function test(){
+        echo 123;die;
+    }
+    
     public function credit(Request $request)
     {
         $api_code = $request->input('api_code');
@@ -500,7 +505,11 @@ class IndexController extends Controller
             
             // DbzhenrenService的login方法参数：login($loginName, $loginPassword, $api_code, $deviceType, $oddType, $lang, $backurl, $domain, $showExit, $gameTypeId, ...)
             $deviceType = $is_mobile_url ? 2 : 1; // 1=PC, 2=H5
-            $res = $service->login($user->username, $gamePassword, $api_code, $deviceType, 0, 1, '', '', 0, $leixing, 0, '', 0, '', 'v2');
+            if ($apiService && strtolower($apiService) === 'dbzhenren') {
+                $res = $service->login($user->username, $gamePassword, $api_code, $deviceType);
+            } else {
+                $res = $service->login($user->username, $gamePassword, $api_code, $deviceType, 0, 1, '', '', 0, $leixing, 0, '', 0, '', 'v2');
+            }
         } else {
             // DbService，跳过注册，直接调用登录接口
             if (empty($venueCode)) {
